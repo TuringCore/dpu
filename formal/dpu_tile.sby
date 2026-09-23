@@ -6,7 +6,7 @@ depth 24
 smtbmc
 
 [script]
-read -formal rtl/dpu_tile.sv formal/dpu_tile_properties.sv
+read -formal dpu_tile.sv dpu_tile_properties.sv
 prep -top dpu_tile_properties
 
 [files]

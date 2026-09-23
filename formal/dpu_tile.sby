@@ -1,0 +1,15 @@
+[options]
+mode prove
+depth 24
+
+[engines]
+smtbmc
+
+[script]
+read -formal rtl/dpu_tile.sv formal/dpu_tile_properties.sv
+prep -top dpu_tile_properties
+
+[files]
+rtl/dpu_tile.sv
+formal/dpu_tile_properties.sv
+

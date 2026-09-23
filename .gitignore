@@ -1,0 +1,8 @@
+simv
+simv.vvp
+*.vcd
+build/
+formal/output/
+__pycache__/
+.DS_Store
+

@@ -1,323 +1,406 @@
-# DPU Prototype: formal-verification-first diffusion processing unit
+# DPU prototype: build the first silicon cleanly on SKY130
 
-## Why we need DPUs now
+## The objective
 
-Current GPU inference pipelines for diffusion models are power-inefficient and expensive at scale. A typical **cloud inference deployment** costs **$15–40 per 1000 diffusion inferences** (at GPU rates and energy). Specialized DPU hardware targeting low-precision denoising can reduce:
+This repository is a small, verification-friendly diffusion processing unit (DPU) prototype aimed at one thing: reducing the cost and uncertainty of running diffusion inference on real silicon.
 
-- **power consumption** by 10–50× (through quantization + fixed-function datapaths)
-- **cost per inference** by 5–20× (amortized silicon vs. GPU rental)
-- **latency variance** by eliminating GPU scheduling contention
+The goal is not to build a heroic chip on day one. The goal is to make the first silicon useful enough to answer the right questions quickly:
 
-For large-scale image or video generation workloads (e-commerce, social media, synthetic media), this translates to **millions of dollars in annual savings**. A cost-effective, single-digit-watt DPU prototype will de-risk production silicon and unlock a new hardware category.
+- Is the datapath correct under signed arithmetic and backpressure?
+- Does the tile behave predictably at the interface boundary?
+- Can this design be made with a clean, realistic SKY130 flow?
+- What does the supply chain look like once the chip is no longer a prototype?
 
-This repository provides the **formal design and verification foundation** for a manufacturable DPU prototype on the **SKY130 open-source PDK**, with a credible path from open RTL to packaged test silicon. The first tile is a streaming signed-`int8` dot-product compute engine with a saturating accumulator—a core primitive for diffusion denoising kernels. **Silicon-ready by design**.
+The design here is intentionally narrow: a signed `int8` dot-product tile with saturating accumulation, valid/ready interfaces, and explicit edge handling. That is enough to capture the core diffusion workload without pretending the full accelerator is already solved.
 
-## Repository contents
+## What is in this repo
 
-This repository now contains a concrete starting point for a simple, verification-friendly DPU prototype aimed at diffusion workloads:
-
-## What is in the repo
-
-- `rtl/dpu_tile.sv` — first RTL artifact for a simple DPU tile
-- `tb/dpu_tile_tb.sv` — self-checking simulation testbench (50+ randomized cases)
-- `formal/dpu_tile_properties.sv` — formal reference model and safety properties
-- `formal/dpu_tile.sby` — SymbiYosys job file for proof automation
-- `docs/architecture.md` — architectural intent and scaling direction
-- `docs/verification.md` — verification strategy and formal proof roadmap
-- `docs/roadmap.md` — staged evolution toward a larger prototype
+- `rtl/dpu_tile.sv` — core DPU tile RTL
+- `tb/dpu_tile_tb.sv` — simulation testbench with randomized coverage
+- `formal/dpu_tile_properties.sv` — formal properties and reference model
+- `formal/dpu_tile.sby` — SymbiYosys proof job
+- `docs/architecture.md` — architecture intent and scaling path
+- `docs/verification.md` — verification strategy
+- `docs/roadmap.md` — longer-term scaling notes
 - `Makefile` — simulation and formal entry points
-- `README.md` — this file, including **concrete 6-month prototype roadmap**
 
-## First silicon primitive
+## Why this is the right first silicon
 
-Diffusion U-Nets, attention blocks, and feed-forward networks spend ~90% of compute in repeated multiply-accumulate heavy operations. A single-lane dot-product tile is the right first artifact because it:
+Diffusion workloads spend most of their compute in repeated multiply-accumulate patterns. The simplest useful building block is therefore not a full accelerator, but a tile that can be reasoned about completely:
 
-1. **captures the core diffusion kernel** (denoising, conv, attention),
-2. **is formally tractable** (small state, proven interfaces, bounded arithmetic),
-3. **can be measured and replicated** into a tile array or systolic cluster,
-4. **moves directly to silicon** (no speculative features, clean reset, proven handshakes).
+- signed `int8` operands
+- saturating accumulation
+- explicit lengths via `cfg_len`
+- valid/ready handshake
+- zero-length handling
+- stable output under backpressure
 
-## Current microarchitecture
+That is exactly the kind of primitive that can be made small enough to prove, stable enough to tape out, and useful enough to scale later.
 
-`dpu_tile` supports:
+## Build it in this order
 
-- signed `int8` operand pairs
-- signed saturating accumulation
-- per-job length configuration via `cfg_len`
-- valid/ready input and output interfaces
-- zero-length job handling
-- stable held output under backpressure
+The cleanest path to silicon is not a broad roadmap. It is a narrow sequence of concrete actions that keeps the design honest.
 
-Conceptually, each configured job computes:
+### 1. Freeze the functionality
 
-`out_sum = saturating_sum(for i in 0..cfg_len-1: in_a[i] * in_b[i])`
+Before any layout work, the core behavior must be pinned down in one place:
+
+- fix the arithmetic semantics
+- fix the saturation behavior
+- fix output hold behavior under backpressure
+- fix zero-length handling
+- fix valid/ready expectations at the boundaries
+
+If these are not nailed down early, physical design will become a tax on ambiguity.
+
+### 2. Make the testbench authoritative
+
+The simulation testbench should be the first source of truth for behavior. It should cover:
+
+- normal dot products
+- saturated overflow cases
+- zero-length jobs
+- valid/ready backpressure
+- random signed inputs
+- held output stability
+
+The goal is to make the behavioral model boring and explicit before formal work begins.
+
+### 3. Close the formal properties
+
+Formal verification is not the first step in the sense of “prove everything at once.” It is the step that turns design intent into a checkable contract.
+
+At minimum, the design should be able to prove:
+
+- no illegal arithmetic under range assumptions
+- output correctness for a known reference model
+- stable output under backpressure
+- valid/ready invariants hold
+- zero-length and empty jobs do not violate the protocol
+
+This is where the project becomes engineering-grade rather than illustrative.
+
+### 4. Run the physical estimates early
+
+Once the RTL is stable, the next step is to estimate the real cost of implementation on SKY130:
+
+- area target
+- achievable frequency
+- power estimate
+- package options
+- IO strategy
+- thermal assumptions
+
+This is not a theoretical step. It is the moment when the chip stops being a nice idea and starts becoming a real manufacturing object.
+
+### 5. Choose a package strategy before you get married to the design
+
+The most common mistake in small silicon programs is treating package selection as a late-stage detail. It is not. For a first DPU, plan for:
+
+- standard package with manageable IO
+- simple power rails and clocking
+- easy bring-up board design
+- straightforward test setup
+
+A complicated package makes a simple chip expensive and slow to debug.
+
+### 6. Get the manufacturing path lined up early
+
+For SKY130, the real question is not “can this be made?” but “what is the lowest-risk route to a first useful wafer run?”
+
+The best operational setup is usually:
+
+- build with OpenLane/OpenROAD and SKY130
+- freeze the RTL and constraints
+- obtain benchmark-quality area/timing data
+- engage a prototype manufacturing partner or MPW route
+- keep board design and packaging choices simple
+
+The point is to reduce schedule risk, not to chase a dramatic mythology around the first silicon.
 
 ## Quick start
 
-Local simulation uses `iverilog` and `vvp`.
+Local simulation:
 
 ```bash
 make sim
 ```
 
-Formal proofs are wired for SymbiYosys/Yosys:
+Formal verification:
 
 ```bash
 make formal
 ```
 
-If `sby` is not installed, the formal target will stop with a helpful message.
+If `sby` is not installed, the formal target will stop with a clear message rather than failing silently.
 
-## Verification status
+## What the current repo already supports
 
-At this stage, the repository provides:
+At the moment, the repository is positioned as a credible first tile rather than a full-production chip.
 
-- ✅ **Simulation proven**: comprehensive regression with 50+ randomized test cases passing
-  - Covers zero-length jobs, directed dot-products, saturation, backpressure, and randomized workloads
-  - Run with `make sim`
-- ✅ **Formal tools installed and operational**: SymbiYosys, Yosys, yices2 all ready
-  - Formal reference model and properties defined
-  - Ready for iterative property refinement
-  - Run with `make formal` (currently in development)
-- ✅ **Simulation-based equivalence verified**: testbench reference model matches DUT behavior
+It already provides:
 
-## Concrete SKY130 tape-out roadmap
+- simulation coverage for core input patterns and edge cases
+- a reference model for comparison
+- formal property scaffolding around interface and arithmetic behavior
+- a small architectural shape that is easy to scale into a larger array
 
-**Target**: a packaged SKY130 prototype suitable for board bring-up and measured inference experiments  
-**PDK**: [SKY130 Open PDK](https://github.com/google/skywater-pdk)  
-**Flow**: [OpenLane](https://github.com/The-OpenROAD-Project/OpenLane) / OpenROAD for open RTL-to-GDS iteration  
-**Manufacturing posture**: assume a **commercial MPW aggregator, turnkey ASIC partner, or direct SkyWater engagement** rather than the historical Efabless path
+This is enough to justify the move into a physical implementation pass.
 
-The practical path is still fast, but it should be described in phases rather than a brittle week-by-week shuttle story.
+## SKY130 production path: the practical sequence
 
-### **Phase 1: design closure**
+The following is the sequence we recommend for producing the first silicon as cleanly as possible.
 
-**Goal**: turn a promising RTL block into something a manufacturing partner can quote without hand-waving.
+### Phase 1: behavioral closure
 
-**Deliverables**:
-- [ ] Formal proof completion for core arithmetic and handshake invariants
-- [ ] Lint-clean RTL and a frozen interface contract
-- [ ] Preliminary FPGA validation for software-visible behavior
-- [ ] Fixed assumptions for clock, reset, power domain, IO count, and package pin budget
+Deliverables:
 
-**Success criteria**: the design is small, stable, and documented well enough that physical implementation can begin without changing the architecture underneath it.
+- final arithmetic semantics
+- verified backpressure behavior
+- stable output semantics under held valid signals
+- deterministic zero-length cases
+- simulation testbench passing
 
-### **Phase 2: physical implementation on SKY130**
+Decision gate:
 
-**Goal**: produce realistic area, timing, and power numbers using the same process assumptions that will be handed to manufacturing.
+- if the behavioral contract is not stable, do not start physical design
 
-**Deliverables**:
-- [ ] First OpenLane/OpenROAD pass with baseline floorplan
-- [ ] SRAM and IO strategy selected from process-supported options
-- [ ] STA, DRC, and LVS issues triaged and driven toward closure
-- [ ] Updated estimates for die area, achievable frequency, and package thermals
+### Phase 2: formal closure
 
-**Success criteria**: there is a first manufacturable GDS candidate and a credible cost model for prototype lots.
+Deliverables:
 
-### **Phase 3: manufacturing handoff**
+- lint-clean RTL
+- formal proof of core protocol invariants
+- reference model alignment
+- documentation sufficient to hand off to a layout engineer
 
-**Goal**: choose the first-silicon path that best balances cost, iteration speed, and program risk.
+Decision gate:
 
-**Deliverables**:
-- [ ] Quote comparison across at least two routes: MPW aggregator/turnkey partner vs. direct foundry engagement
-- [ ] DFT plan, test vectors, scan assumptions, and wafer sort expectations
-- [ ] Package selection (ideally standard QFN/QFP for early bring-up unless IO count forces BGA)
-- [ ] Bring-up board plan using commodity regulators, oscillators, connectors, and debug headers
+- if the protocol remains fuzzy, the design is not ready for tape-out
 
-**Success criteria**: the project has a booked manufacturing slot, a known package/test path, and a board-level validation plan that does not depend on custom infrastructure.
+### Phase 3: physical estimation
 
-### **Phase 4: packaged silicon and measured learning**
+Deliverables:
 
-**Goal**: get from bare die to usable engineering feedback quickly.
+- first OpenLane/OpenROAD flow
+- area and timing estimate
+- power estimate
+- package and IO review
+- DRC/LVS triage on the first pass
 
-**Deliverables**:
-- [ ] Packaged parts returned from wafer fab and OSAT
-- [ ] Bring-up board assembled from off-the-shelf components
-- [ ] First measurements for power, throughput, latency, and numerical behavior
-- [ ] Decision memo: iterate the same die, scale to a small tile array, or move to a richer memory subsystem
+Decision gate:
 
-**Success criteria**: the first chip is not just fabricated but characterized well enough to drive the next design and commercial decision.
+- if the design cannot be closed with sane area and frequency assumptions, simplify the architecture before manufacturing
 
----
+### Phase 4: manufacturing handoff
 
-## SKY130-specific design targets
+Deliverables:
 
-- **Area**: 0.1–0.3 mm² (single tile + modest SRAM)
-- **Frequency**: 500 MHz (conservative; 1 GHz possible with optimization)
-- **Power**: 10–50 mW @ 500 MHz (quantized datapath, minimal clocking)
-- **Process**: SKY130 (180 nm² cell, 5µm minimum gate length)
-- **Voltage**: 1.8 V typical (SKY130 core voltage)
+- quote from at least two prototype manufacturing routes
+- package selection locked
+- board bring-up plan defined
+- test fixture and debug plan prepared
 
-## SKY130 manufacturing options
+Decision gate:
 
-Earlier versions of this README assumed the Efabless/Google shuttle. That was a useful on-ramp for open silicon work, but it should now be treated as historical context rather than the operating plan.
+- if there is no clean bring-up path, do not tape out
 
-For a SKY130 prototype in the current environment, the realistic choices are:
+### Phase 5: bring-up and learning
 
-1. **Commercial MPW aggregator or turnkey ASIC partner**  
-   Best fit for first silicon. This route keeps the open PDK benefits while outsourcing the hardest operational edges: shuttle booking, package sourcing, DFT review, signoff formatting, and foundry communication.
+Deliverables:
 
-   Examples to evaluate include: **MOSIS**, **Europractice**, **CMC Microsystems**, and commercial open-flow or mixed-signal ASIC service firms that are willing to broker a SKY130 prototype run. Availability and program fit should be confirmed at engagement time.
+- packaged silicon returns
+- board-level validation in place
+- performance and power measurements
+- go/no-go decision: iterate tile, scale to array, or change architecture
 
-2. **Direct engagement with SkyWater plus chosen packaging/test vendors**  
-   Best fit once the design is stable and there is budget for more control. This route is more work, but it creates a cleaner bridge from prototype to repeatable production.
+This is not the glamorous phase, but it is the one that tells you whether the chip is actually worth building.
 
-   In practice, this often means building around **SkyWater** for wafer access, then pairing that relationship with a design-services/signoff partner and a separate OSAT for package and test.
+## SKY130-specific guidance
 
-3. **Tiny shared digital run for demonstration-only silicon**  
-   Best fit for very small educational macros or control-path experiments, not for the full performance and packaging story of a DPU tile.
+For this program, the right assumptions are intentionally conservative:
 
-   Examples to evaluate include educational or community programs such as **Tiny Tapeout** for control-plane experiments, while keeping expectations modest about package choice, test depth, and accelerator-scale performance.
+- process: SKY130
+- flow: OpenLane/OpenROAD
+- first package: simple, standard, easy to source
+- voltage: standard rails, no exotic power domains
+- board: commodity regulators and debug headers
+- objective: first useful silicon, then scale
 
-### Recommended first-silicon route
+A chip designed for the first available package, board, and test flow is easier to manufacture and easier to learn from.
 
-For this repository, the most reasonable replacement for the old Efabless assumption is:
+## Real manufacturing choices
 
-- use **OpenLane/OpenROAD + SKY130** for internal iteration,
-- hand the first manufacturable database to a **commercial MPW aggregator or turnkey open-source-flow ASIC house** such as a brokered path through **MOSIS**-style institutional access or a commercial ASIC services partner,
-- package the part in a **standard, easy-to-source package**,
-- validate it on a bring-up board assembled from commodity parts.
+The old idea of “just use one path and hope” is not a strategy. There are three realistic categories of manufacturing engagement for a SKY130 prototype.
 
-That path preserves the openness of the design flow while reducing schedule risk where startups usually get hurt: package selection, wafer logistics, and production test.
+### Option A: MPW or turnkey ASIC services
 
-## Notes
+Best for:
 
-### Current status
+- first silicon with minimal internal process overhead
+- teams that want wafers, package, and test handled by a service provider
+- fast learnings without building a deep manufacturing org
 
-**Simulation**: ✅ All tests passing (zero-length, directed, saturation, backpressure, 50+ randomized cases)
+Good partners to evaluate include:
 
-**Formal verification**: 🔧 In progress
-- SymbiYosys, Yosys, yices2 installed and operational
-- Reference model and properties defined in `formal/dpu_tile_properties.sv`
-- Formal assertions under refinement (typical for early-stage formal work)
-- Strong simulation coverage carries confidence until formal closure
+- MOSIS
+- Europractice
+- CMC Microsystems
+- commercial ASIC service houses with SKY130 experience
 
-### SKY130 GTM focus
+Use this when the goal is speed and clean execution.
 
-This repository is **optimized for a first-silicon SKY130 program** that values fast iteration, transparent tooling, and manufacturability over process-node prestige. The point is not to chase a heroic tape-out story; the point is to get a real part into engineers' hands quickly enough that product and manufacturing learning can compound.
+### Option B: direct foundry + external OSAT
 
-**Why SKY130 for this prototype**:
-- **Open-source toolchain**: OpenLane automates physical design; no commercial EDA licenses needed
-- **Published PDK**: All device models, SRAM macros, and DFT collateral public
-- **Mature operating point**: forgiving for a first design with conservative clocks and straightforward power delivery
-- **Operationally legible**: easier to quote, review, and de-risk with outside manufacturing partners than a more exotic first-node choice
+Best for:
 
-**Immediate next steps to move silicon**:
+- more control over wafers, packaging, and test
+- teams that want a cleaner path to repeatable production
+- stronger institutional process management
 
-1. **Close the design**:
-   - [ ] Finalize formal closure + lint clean
-   - [ ] Freeze package-facing IO and test assumptions
-   - [ ] Produce a concise manufacturing data room (block diagram, area target, power target, interface spec)
+This is usually a better fit once the design is stable and production interest appears real.
 
-2. **Run physical estimates**:
-   - [ ] Clone OpenLane; set up dpu_tile flow
-   - [ ] First RTL-to-GDS iteration; capture area/timing
-   - [ ] Decide whether the first package can remain in QFN/QFP or requires BGA
+### Option C: educational or tiny prototype runs
 
-3. **Engage manufacturing**:
-   - [ ] Solicit prototype quotes from at least two MPW/turnkey partners or institutional brokers (for example **MOSIS**, **Europractice**, or **CMC Microsystems**, where eligibility and program scope fit)
-   - [ ] Line up OSAT, board assembly, and test fixture assumptions before tape-out
+Best for:
 
-4. **Build the pilot system**:
-   - [ ] Design the evaluation board around standard regulators, clocks, and debug interfaces
-   - [ ] Prepare software and test flows so parts can be characterized immediately on arrival
+- macro experiments
+- educational demonstrations
+- non-production validation
 
-### Design philosophy
+This is not the right route for the first serious accelerator prototype unless the project is intentionally small.
 
-This repo starts with a tiny, proven primitive rather than over-claiming a full diffusion ASIC. The fastest, lowest-risk path to **first silicon** is to:
+## Recommended first path
 
-1. **Keep it small** (single tile, minimal SRAM)
-2. **Use proven open-source flow** (OpenLane + SKY130, no exotic tooling)
-3. **Choose standard packaging and board interfaces** so manufacturing can scale without re-architecting the chip
-4. **Measure early** (RTL-to-GDS in Week 3; real area/timing available)
-5. **Parallelize validation** (FPGA bring-up + ASIC simulation in parallel)
+For this repository, the practical choice is:
 
-**Team scope**: 1.5 FTE for 5 months (1 hardware engineer, 1 tools/verification engineer, 0.5 shared project management).
+1. use OpenLane + SKY130 for internal design and layout iteration
+2. keep the first die small and boring
+3. package it in a standard part
+4. use a commercial prototype route or institutional brokerage for the first tape-out
+5. bring it up on a simple commodity board
 
----
+This preserves open tooling while reducing the points of failure that kill small silicon programs: package issues, supply friction, and weak bring-up planning.
 
-## Getting started: SKY130 path
+## Supply chain decision: simple value stream map
 
-**Read these first** (30 min total):
-- [OpenLane Overview](https://openlane.readthedocs.io/en/latest/) — flow architecture
-- [SKY130 PDK Intro](https://github.com/google/skywater-pdk) — process details
+A good way to think about the manufacturing path is as a value stream, not a roadmap.
 
-**Then do this** (2 hours):
-1. Clone locally; review `openlane/designs/` structure
-2. Run `make setup` to install OpenLane
-3. Generate a first synthesis/place-route estimate for `dpu_tile`
-4. Write a one-page manufacturing brief before speaking with any MPW or packaging partner
+```text
+Design freeze
+   -> RTL verification
+   -> formal closure
+   -> OpenLane flow
+   -> prototype quote
+   -> wafer run
+   -> packaging + test
+   -> bring-up board
+   -> pilot deployment
+   -> demand-led scale-up
+```
 
-**Questions?**:
-- [SKY130 GitHub Issues](https://github.com/google/skywater-pdk/issues) — process questions
-- [OpenLane Discussions](https://github.com/The-OpenROAD-Project/OpenLane/discussions) — tool help
+A useful way to read this is:
 
-## Supply-chain and scaling considerations
+- if the design has not been verified, the supply chain is still guessing
+- if the package is not selected, the board is still under-specified
+- if the test flow is not planned, yield learning is delayed
+- if the customer or use-case is not clear, the volume plan is unreliable
 
-The supply-chain risk in a small accelerator program is rarely just the wafer. More often, the trouble starts at the seams between wafer fabrication, packaging, test, and board integration.
+The value stream has to be governed by real bottlenecks, not by abstract optimism.
 
-Key issues to plan around:
+## Supply chain tradeoffs: what to optimize for
 
-- **MPW slot availability**: shuttle timing can move, and prototype lots do not always align neatly with product needs.
-- **Package lead times**: standard leadframe packages are much easier to source than custom substrates; for an early DPU, that difference matters.
-- **Test infrastructure**: probe cards, sockets, and production test scripts can become the long pole if they are treated as afterthoughts.
-- **Macro dependencies**: once a design depends on a particular SRAM or IO option, changing manufacturing partners becomes harder.
-- **Board-level bottlenecks**: regulators, oscillators, connectors, and assembly capacity are mundane until they delay the first usable system.
+### Case 1: low volume, high learning value
 
-The practical design response is to keep the first chip unusually boring at the edges: conservative IO, standard voltages, ordinary packages, and a board that can be assembled by almost any competent contract manufacturer.
+If the aim is to learn about the architecture and benchmark feasibility, the cheapest production choice is usually:
 
-## Can this scale with off-the-shelf parts?
+- standard package
+- lower complexity PCB
+- prototype MPW or brokered run
+- conservative IO and power design
+- minimal custom test hardware
 
-Not at the transistor level—the ASIC itself is still custom silicon—but yes at the **system level**, and that is where flexibility comes from.
+This is the lowest-risk route to real data.
 
-The most scalable version of this program would:
+### Case 2: pilot deployment with genuine pull
 
-- keep the die small and reusable,
-- place it in a standard package that multiple OSATs can assemble,
-- use common board components for power, clocks, flash, and control,
-- expose simple host interfaces for evaluation and clustering,
-- scale demand by replicating identical packaged devices across boards before redesigning a larger monolithic die.
+If there is real customer or internal demand, the better move is:
 
-That approach turns manufacturing scale into a packaging-and-board problem rather than a fresh tape-out problem. For an uncertain market, that is usually the right trade.
+- repeat a proven die in modest lots
+- lock package and board assembly vendor early
+- use a second-source packaging path if needed
+- standardize on a design that can be repeated without redesign
+
+At this point, the priority is repeatability, not novelty.
+
+### Case 3: higher volume, more control
+
+If demand scales, the design should move toward:
+
+- direct foundry engagement where that adds real operational leverage
+- a second packaging/test vendor for resilience
+- stronger inventory planning for long-lead components
+- modular board and chip design so capacity is added by replication, not re-architecture
+
+This is when the manufacturing footprint becomes strategic rather than tactical.
 
 ## Where manufacturing should happen
 
-A pragmatic steady-state split is:
+A steady-state split that makes practical sense is:
 
-- **Wafer fabrication**: use the foundry path with the best reliable access to SKY130 capacity and design support. For a U.S.-anchored program, the obvious name to evaluate is **SkyWater**, either directly or through an intermediary that already knows how to package prototype shuttles into a manufacturable engagement.
-- **Packaging and test**: qualify at least one high-service OSAT and one lower-cost volume path. Examples to evaluate include large established providers such as **Amkor**, **ASE**, and **JCET**, along with more specialized test-and-package houses such as **ChipMOS**, **PTI**, or **UTAC**, depending on package style and lot size.
-- **Board assembly**: keep early pilot builds close to the engineering team, then move repeatable card assembly nearer to deployment regions or major server integration partners. For early cards, examples to evaluate include fast-turn assemblers such as **MacroFab**, **Tempo Automation**, or **Screaming Circuits**, with component sourcing through distributors such as **DigiKey**, **Mouser**, **Arrow**, or **Avnet**.
+- wafer fabrication: foundry path with dependable access to SKY130 capacity and process support
+- packaging/test: contract OSAT with strong process discipline and good engineering support
+- board assembly: close to the system integration team or deployment location for fast iteration
 
-In other words: fabricate where the process is stable, package where there is real operational depth, and assemble systems where iteration with customers is fastest.
+That split keeps the design flexible. The chip stays reusable, the package remains standard, and the board system can scale with demand without forcing a redesign every time the plan changes.
 
-## Long-term steady-state manufacturing path
+## Recommended long-term steady-state path
 
-If demand appears gradually—as is typical for new accelerator categories—the healthiest path is staged rather than heroic.
+### Stage A: prototype and measurement
 
-### **Stage A: prototype and measurement**
+- first silicon through a prototype run or turnkey manufacturing partner
+- standard package and simple bring-up board
+- objective: prove the economics and behavior on real hardware
 
-- First silicon through an MPW aggregator or turnkey partner; institutional paths such as **MOSIS**, **Europractice**, or **CMC Microsystems** may be worth exploring if they match the team's eligibility and timeline
-- Standard package, simple bring-up board, direct measurement of power and throughput
-- Goal: prove the economics of diffusion inference on real hardware
+### Stage B: pilot deployment
 
-### **Stage B: pilot deployments**
+- repeat the same silicon in modest volumes
+- validate thermal behavior, software compatibility, and utilization
+- keep the architecture stable enough to learn from real demand
 
-- Repeat the same die in modest volumes rather than rushing to a bigger ASIC
-- Build small accelerator cards or modules from packaged parts
-- Use pilot deployments to learn thermals, utilization, failure modes, and software requirements
+### Stage C: supply planning
 
-### **Stage C: demand-shaped scale-up**
+- secure repeatable wafer access
+- qualify packaging and test partners
+- avoid exotic package or board choices unless there is real customer pull
+- build inventory against real demand, not hype
 
-- Reserve recurring wafer access instead of relying on opportunistic shuttles
-- Dual-source packaging/test where possible, ideally with one relationship optimized for engineering support and another for costed volume
-- Pre-buy long-lead package and test materials only after real customer pull is visible
-- Keep the architecture modular so capacity can grow by adding more identical devices per board or per rack
+### Stage D: scale by replication, not by redesign
 
-### **Stage D: production refinement**
+- expand via more identical packaged parts rather than a new tape-out every quarter
+- preserve modular interfaces so the system can be scaled cleanly
+- only move to a more custom production path when the commercial case is real
 
-- Move to direct foundry management only when volumes justify the overhead; that is the point where a direct **SkyWater** relationship becomes more compelling than purely brokered prototype access
-- Decide whether to stay on SKY130 for reliability and cost discipline or migrate selected blocks later
-- Treat packaging, memory adjacency, and board topology as the main levers for scaling supply with demand
+That is the steady-state manufacturing model that keeps risk low and optionality high.
 
-The long-term point is flexibility: a manufacturable accelerator business is not won by one tape-out, but by building a supply path that can expand carefully without forcing a redesign every time demand changes.
+## Bottom line
 
+The cleanest way to build this program is simple:
+
+1. make the behavior obvious
+2. prove the protocol
+3. estimate the implementation early
+4. choose easy packaging and board strategy
+5. manufacture through a low-risk prototype path
+6. scale only when the demand is real
+
+This is how you produce silicon without turning the first chip into a speculative monument. It is a good design discipline, and it is also the safest commercial strategy.
+
+## References and useful links
+
+- [OpenLane](https://openlane.readthedocs.io/en/latest/)
+- [SKY130 PDK](https://github.com/google/skywater-pdk)
+- [OpenROAD Project](https://theopenroadproject.org/)
+- [SymbiYosys](https://symbiyosys.readthedocs.io/)
+
+The key idea is straightforward: build the smallest credible tile, prove it, make it manufacturable, and do not confuse early learning with final product strategy.

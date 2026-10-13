@@ -19,10 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up OSS CAD Suite
-        uses: YosysHQ/setup-oss-cad-suite@aefa8397bbf8fc6670a0a62af9805a89738f3cde
-      - name: Verify formal tools
+      - name: Install Yosys, Boolector, and SymbiYosys
+        shell: bash
         run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys boolector
+          git init "$RUNNER_TEMP/sby"
+          git -C "$RUNNER_TEMP/sby" fetch --depth 1 https://github.com/YosysHQ/sby.git b1a1e98cba941ec8433f8dc27f416cd7bb7f14be
+          git -C "$RUNNER_TEMP/sby" checkout --detach FETCH_HEAD
+          sudo make -C "$RUNNER_TEMP/sby" install
           yosys -V
           sby --version
       - name: Run formal checks

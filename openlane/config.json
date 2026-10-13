@@ -1,0 +1,29 @@
+{
+  "DESIGN_NAME": "dpu_tile_top",
+  "VERILOG_FILES": [
+    "dir::../rtl/dpu_tile.sv",
+    "dir::../rtl/dpu_tile_top.sv"
+  ],
+  "EXTRA_VERILOG": [],
+  "CLOCK_PERIOD": 10,
+  "CLOCK_PORT": "clk",
+  "CLOCK_NET": "clk",
+  "FP_SIZING": "absolute",
+  "DIE_AREA": "0 0 250 250",
+  "CORE_AREA": "20 20 230 230",
+  "PL_TARGET_DENSITY": 0.60,
+  "MAX_TRANSITION_CONSTRAINT": 1.5,
+  "MAX_FANOUT_CONSTRAINT": 10,
+  "SYNTH_STRATEGY": "AREA 3",
+  "QUIT_ON_LINTER_WARNINGS": "0",
+  "RUN_KLAYOUT": true,
+  "RUN_MAGIC_DRC": true,
+  "PWR_NETS": [
+    "vccd1",
+    "vdda1"
+  ],
+  "GND_NETS": [
+    "vssd1",
+    "vssa1"
+  ]
+}

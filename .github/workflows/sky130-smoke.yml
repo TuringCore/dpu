@@ -1,45 +1,41 @@
-# This file is intentionally minimal and designed to keep the repo self-contained.
-# It provides a lightweight smoke test on the main branch so that sim + formal
-# checks run in CI without requiring a full board or custom ASIC harness.
-
 name: sky130-signoff-smoke
-+
-+on:
-+  push:
-+    branches: ["**"]
-+  pull_request:
-+
-+jobs:
-+  sim:
-+    runs-on: ubuntu-latest
-+    steps:
-+      - uses: actions/checkout@v4
-+      - name: Install Icarus Verilog
-+        run: sudo apt-get update && sudo apt-get install -y iverilog
-+      - name: Run RTL simulation
-+        run: make sim
-+
-+  formal:
-+    runs-on: ubuntu-latest
-+    steps:
-+      - uses: actions/checkout@v4
-+      - name: Install SymbiYosys / Yosys
-+        run: |
-+          sudo apt-get update
-+          sudo apt-get install -y yosys sby
-+      - name: Run formal checks
-+        run: make formal
-+
-+  synthesis-smoke:
-+    runs-on: ubuntu-latest
-+    steps:
-+      - uses: actions/checkout@v4
-+      - name: Install docker (required for OpenLane)
-+        run: |
-+          sudo apt-get update
-+          sudo apt-get install -y docker.io
-+      - name: OpenLane smoke check
-+        run: |
-+          docker run --rm -v "$(pwd):/work" -w /work \
-+            efabless/openlane:latest \
-+            sh -lc "cd /work && openlane --run_file openlane/config.json"
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Icarus Verilog
+        run: sudo apt-get update && sudo apt-get install -y iverilog
+      - name: Run RTL simulation
+        run: make sim
+
+  formal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SymbiYosys / Yosys
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys sby
+      - name: Run formal checks
+        run: make formal
+
+  synthesis-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install docker (required for OpenLane)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+      - name: OpenLane smoke check
+        run: |
+          docker run --rm -v "$(pwd):/work" -w /work \
+            efabless/openlane:latest \
+            sh -lc "cd /work && openlane --run_file openlane/config.json"

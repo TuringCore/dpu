@@ -19,16 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Yosys and SymbiYosys
-        shell: bash
+      - name: Set up OSS CAD Suite
+        uses: YosysHQ/setup-oss-cad-suite@aefa8397bbf8fc6670a0a62af9805a89738f3cde
+      - name: Verify formal tools
         run: |
-          set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y yosys python3-pip
-          python3 -m pip install --user --upgrade pip
-          python3 -m pip install --user symbiyosys
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          which sby
+          yosys -V
           sby --version
       - name: Run formal checks
         shell: bash
@@ -42,10 +37,8 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Install docker (required for OpenLane)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
+      - name: Verify Docker
+        run: docker --version
       - name: OpenLane smoke check
         run: |
           docker run --rm -v "$(pwd):/work" -w /work \

@@ -19,16 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Yosys and SymbiYosys
+      - name: Install Yosys, Boolector, and SymbiYosys
         shell: bash
         run: |
           set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y yosys python3-pip
-          python3 -m pip install --user --upgrade pip
-          python3 -m pip install --user symbiyosys
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          which sby
+          sudo apt-get install -y yosys boolector
+          git init "$RUNNER_TEMP/sby"
+          git -C "$RUNNER_TEMP/sby" fetch --depth 1 https://github.com/YosysHQ/sby.git b1a1e98cba941ec8433f8dc27f416cd7bb7f14be
+          git -C "$RUNNER_TEMP/sby" checkout --detach FETCH_HEAD
+          sudo make -C "$RUNNER_TEMP/sby" install
+          yosys -V
           sby --version
       - name: Run formal checks
         shell: bash
@@ -42,10 +43,8 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Install docker (required for OpenLane)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
+      - name: Verify Docker
+        run: docker --version
       - name: OpenLane smoke check
         run: |
           docker run --rm -v "$(pwd):/work" -w /work \

@@ -1,0 +1,32 @@
+name: sky130-smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y iverilog
+      - run: make sim
+
+  formal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y yosys
+      - name: Install SymbiYosys and solver
+        run: |
+          sudo apt-get install -y python3-pip z3 boolector || true
+          pip3 install --user sby 2>/dev/null || true
+      - run: make formal
+
+  synthesis-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y yosys
+      - name: Yosys synthesis (no Docker, PDK-agnostic)
+        run: make sky130-synth-yosys-only

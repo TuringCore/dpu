@@ -22,7 +22,9 @@ The design here is intentionally narrow: a signed `int8` dot-product tile with s
 - `docs/architecture.md` — architecture intent and scaling path
 - `docs/verification.md` — verification strategy
 - `docs/roadmap.md` — longer-term scaling notes
-- `Makefile` — simulation and formal entry points
+- `docs/SYNTHESIS.md` — sky130 synthesis flow
+- `openlane/README.md` — full P&R with upstream OpenLane
+- `Makefile` — simulation, formal, and synthesis entry points
 
 ## Why this is the right first silicon
 
@@ -68,6 +70,13 @@ The cleanest way to get this design to silicon is a single, disciplined sequence
    - if demand scales: move to more direct foundry management and second-sourced packaging/test
 
 This is the real roadmap: behavior first, proof next, physical estimate third, then manufacturing based on real learning and demand.
+
+## Physical Design Flow
+
+Two tiers:
+
+- **Lightweight:** Yosys synthesis in CI (`make sky130-synth-yosys-only`) for fast validation, no Docker.
+- **Full signoff:** OpenLane P&R run locally with upstream [OpenLane](https://github.com/The-OpenROAD-Project/OpenLane) (see `openlane/README.md` and `docs/SYNTHESIS.md`).
 
 ## Supply chain tradeoffs
 

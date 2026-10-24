@@ -3,7 +3,7 @@ mode prove
 depth 24
 
 [engines]
-smtbmc
+abc pdr
 
 [script]
 read -formal dpu_tile.sv dpu_tile_properties.sv
@@ -12,4 +12,3 @@ prep -top dpu_tile_properties
 [files]
 rtl/dpu_tile.sv
 formal/dpu_tile_properties.sv
-

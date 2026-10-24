@@ -13,15 +13,33 @@ jobs:
       - run: make sim
 
   formal:
+    name: formal (Yosys/SymbiYosys)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y yosys
-      - name: Install SymbiYosys and solver
+      - uses: YosysHQ/setup-oss-cad-suite@v3
+      - name: Formal verification (SymbiYosys prove)
         run: |
-          sudo apt-get install -y python3-pip z3 boolector || true
-          pip3 install --user sby 2>/dev/null || true
-      - run: make formal
+          set -o pipefail
+          make formal 2>&1 | tee formal.log
+      - name: Report result in job summary
+        if: always()
+        run: |
+          {
+            echo "### Formal verification (Yosys/SymbiYosys)"
+            if grep -q "DONE (PASS" formal.log; then echo "**PASS**"; else echo "**FAIL**"; fi
+            echo '```'
+            grep -E "summary|DONE|assert|Status" formal.log | tail -20
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: formal-output
+          path: |
+            formal.log
+            formal/dpu_tile/
+          if-no-files-found: ignore
 
   synthesis-check:
     runs-on: ubuntu-latest

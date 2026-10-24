@@ -1,8 +1,0 @@
-# running in formal/dpu_tile/src/
-read -formal dpu_tile.sv dpu_tile_properties.sv
-prep -top dpu_tile_properties
-
-hierarchy -smtcheck
-rename -witness
-write_jny -no-connections ../model/design.json
-write_rtlil ../model/design.il

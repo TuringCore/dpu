@@ -1,8 +1,0 @@
-Elapsed clock time [H:MM:SS (secs)]: 0:00:02 (2)
-Elapsed process time [H:MM:SS (secs)]: 0:00:02 (2)
-engine_0 (smtbmc) returned pass for basecase
-engine_0 (smtbmc) returned FAIL for induction
-counterexample trace [induction]: engine_0/trace_induct.vcd
-counterexample trace [induction]: engine_0/trace_induct.yw
-  failed assertion dpu_tile_properties._witness_.check_dpu_tile_properties_sv_144_assert_156 at dpu_tile_properties.sv:144.17-144.77
-  failed assertion dpu_tile_properties._witness_.check_dpu_tile_properties_sv_145_assert_161 at dpu_tile_properties.sv:145.17-145.75

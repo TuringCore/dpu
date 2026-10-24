@@ -1,0 +1,686 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.70+201 (git sha1 0ad867ab5, Release, Clang /usr/bin/clang++ 21.1.8)
+
+-- Executing script file `../model/design.ys' --
+
+1. Executing Verilog-2005 frontend: dpu_tile.sv
+Parsing formal SystemVerilog input from `dpu_tile.sv' to AST representation.
+Storing AST representation for module `$abstract\dpu_tile'.
+Successfully finished Verilog frontend.
+
+2. Executing Verilog-2005 frontend: dpu_tile_properties.sv
+Parsing formal SystemVerilog input from `dpu_tile_properties.sv' to AST representation.
+Storing AST representation for module `$abstract\dpu_tile_properties'.
+Successfully finished Verilog frontend.
+
+3. Executing PREP pass.
+
+3.1. Executing HIERARCHY pass (managing design hierarchy).
+
+3.2. Executing AST frontend in derive mode using pre-parsed AST for module `\dpu_tile_properties'.
+Generating RTLIL representation for module `\dpu_tile_properties'.
+
+3.2.1. Analyzing design hierarchy..
+Top module:  \dpu_tile_properties
+Parameter \DATA_W = 8
+Parameter \ACC_W = 16
+Parameter \LEN_W = 4
+
+3.2.2. Executing AST frontend in derive mode using pre-parsed AST for module `\dpu_tile'.
+Parameter \DATA_W = 8
+Parameter \ACC_W = 16
+Parameter \LEN_W = 4
+Generating RTLIL representation for module `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+
+3.2.3. Analyzing design hierarchy..
+Top module:  \dpu_tile_properties
+Used module:     $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile
+
+3.2.4. Analyzing design hierarchy..
+Top module:  \dpu_tile_properties
+Used module:     $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile
+Removing unused module `$abstract\dpu_tile_properties'.
+Removing unused module `$abstract\dpu_tile'.
+Removed 2 unused modules.
+Module dpu_tile_properties directly or indirectly contains formal properties -> setting "keep" attribute.
+
+3.3. Executing PROC pass (convert processes to netlists).
+
+3.3.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:69$proc$294'.
+Removing empty process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:69$proc$294'.
+Cleaned up 1 empty switch.
+
+3.3.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 9 switch rules as full_case in process $dpu_tile.sv:75$proc$187 in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+Marked 9 switch rules as full_case in process $dpu_tile_properties.sv:75$proc$19 in module dpu_tile_properties.
+Removed a total of 0 dead cases.
+
+3.3.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 1 redundant assignment.
+Promoted 52 assignments to connections.
+
+3.3.4. Executing PROC_INIT pass (extract init attributes).
+
+3.3.5. Executing PROC_ARST pass (detect async resets in processes).
+Found async reset \rst_n in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+
+3.3.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~28 debug messages>
+
+3.3.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+     1/79: $6\sat_add_product$func$dpu_tile.sv:105$178.$result[15:0]$292
+     2/79: $5\sat_add_product$func$dpu_tile.sv:105$178.$result[15:0]$290
+     3/79: $4\sat_add_product$func$dpu_tile.sv:105$178.$result[15:0]$277
+     4/79: $4\sat_add_product$func$dpu_tile.sv:105$178.min_ext[16:0]$286
+     5/79: $4\sat_add_product$func$dpu_tile.sv:105$178.max_ext[16:0]$285
+     6/79: $4\sat_add_product$func$dpu_tile.sv:105$178.raw_sum[16:0]$284
+     7/79: $4\sat_add_product$func$dpu_tile.sv:105$178.product_ext[16:0]$283
+     8/79: $4\sat_add_product$func$dpu_tile.sv:105$178.lhs_ext[16:0]$282
+     9/79: $4\sat_add_product$func$dpu_tile.sv:105$178.product[15:0]$281
+    10/79: $4\sat_add_product$func$dpu_tile.sv:105$178.rhs_b[7:0]$280
+    11/79: $4\sat_add_product$func$dpu_tile.sv:105$178.rhs_a[7:0]$279
+    12/79: $4\sat_add_product$func$dpu_tile.sv:105$178.lhs[15:0]$278
+    13/79: $5\sat_add_product$func$dpu_tile.sv:100$177.$result[15:0]$275
+    14/79: $4\sat_add_product$func$dpu_tile.sv:100$177.$result[15:0]$273
+    15/79: $3\sat_add_product$func$dpu_tile.sv:105$178.min_ext[16:0]$269
+    16/79: $3\sat_add_product$func$dpu_tile.sv:105$178.max_ext[16:0]$268
+    17/79: $3\sat_add_product$func$dpu_tile.sv:105$178.raw_sum[16:0]$267
+    18/79: $3\sat_add_product$func$dpu_tile.sv:105$178.product_ext[16:0]$266
+    19/79: $3\sat_add_product$func$dpu_tile.sv:105$178.lhs_ext[16:0]$265
+    20/79: $3\sat_add_product$func$dpu_tile.sv:105$178.product[15:0]$264
+    21/79: $3\sat_add_product$func$dpu_tile.sv:105$178.rhs_b[7:0]$263
+    22/79: $3\sat_add_product$func$dpu_tile.sv:105$178.rhs_a[7:0]$262
+    23/79: $3\sat_add_product$func$dpu_tile.sv:105$178.lhs[15:0]$261
+    24/79: $3\sat_add_product$func$dpu_tile.sv:105$178.$result[15:0]$260
+    25/79: $3\sat_add_product$func$dpu_tile.sv:100$177.$result[15:0]$250
+    26/79: $3\sat_add_product$func$dpu_tile.sv:100$177.min_ext[16:0]$259
+    27/79: $3\sat_add_product$func$dpu_tile.sv:100$177.max_ext[16:0]$258
+    28/79: $3\sat_add_product$func$dpu_tile.sv:100$177.raw_sum[16:0]$257
+    29/79: $3\sat_add_product$func$dpu_tile.sv:100$177.product_ext[16:0]$256
+    30/79: $3\sat_add_product$func$dpu_tile.sv:100$177.lhs_ext[16:0]$255
+    31/79: $3\sat_add_product$func$dpu_tile.sv:100$177.product[15:0]$254
+    32/79: $3\sat_add_product$func$dpu_tile.sv:100$177.rhs_b[7:0]$253
+    33/79: $3\sat_add_product$func$dpu_tile.sv:100$177.rhs_a[7:0]$252
+    34/79: $3\sat_add_product$func$dpu_tile.sv:100$177.lhs[15:0]$251
+    35/79: $2\sat_add_product$func$dpu_tile.sv:105$178.min_ext[16:0]$248
+    36/79: $2\sat_add_product$func$dpu_tile.sv:105$178.max_ext[16:0]$247
+    37/79: $2\sat_add_product$func$dpu_tile.sv:105$178.raw_sum[16:0]$246
+    38/79: $2\sat_add_product$func$dpu_tile.sv:105$178.product_ext[16:0]$245
+    39/79: $2\sat_add_product$func$dpu_tile.sv:105$178.lhs_ext[16:0]$244
+    40/79: $2\sat_add_product$func$dpu_tile.sv:105$178.product[15:0]$243
+    41/79: $2\sat_add_product$func$dpu_tile.sv:105$178.rhs_b[7:0]$242
+    42/79: $2\sat_add_product$func$dpu_tile.sv:105$178.rhs_a[7:0]$241
+    43/79: $2\sat_add_product$func$dpu_tile.sv:105$178.lhs[15:0]$240
+    44/79: $2\sat_add_product$func$dpu_tile.sv:105$178.$result[15:0]$239
+    45/79: $2\sat_add_product$func$dpu_tile.sv:100$177.min_ext[16:0]$238
+    46/79: $2\sat_add_product$func$dpu_tile.sv:100$177.max_ext[16:0]$237
+    47/79: $2\sat_add_product$func$dpu_tile.sv:100$177.raw_sum[16:0]$236
+    48/79: $2\sat_add_product$func$dpu_tile.sv:100$177.product_ext[16:0]$235
+    49/79: $2\sat_add_product$func$dpu_tile.sv:100$177.lhs_ext[16:0]$234
+    50/79: $2\sat_add_product$func$dpu_tile.sv:100$177.product[15:0]$233
+    51/79: $2\sat_add_product$func$dpu_tile.sv:100$177.rhs_b[7:0]$232
+    52/79: $2\sat_add_product$func$dpu_tile.sv:100$177.rhs_a[7:0]$231
+    53/79: $2\sat_add_product$func$dpu_tile.sv:100$177.lhs[15:0]$230
+    54/79: $2\sat_add_product$func$dpu_tile.sv:100$177.$result[15:0]$229
+    55/79: $1\sat_add_product$func$dpu_tile.sv:105$178.min_ext[16:0]$228
+    56/79: $1\sat_add_product$func$dpu_tile.sv:105$178.max_ext[16:0]$227
+    57/79: $1\sat_add_product$func$dpu_tile.sv:105$178.raw_sum[16:0]$226
+    58/79: $1\sat_add_product$func$dpu_tile.sv:105$178.product_ext[16:0]$225
+    59/79: $1\sat_add_product$func$dpu_tile.sv:105$178.lhs_ext[16:0]$224
+    60/79: $1\sat_add_product$func$dpu_tile.sv:105$178.product[15:0]$223
+    61/79: $1\sat_add_product$func$dpu_tile.sv:105$178.rhs_b[7:0]$222
+    62/79: $1\sat_add_product$func$dpu_tile.sv:105$178.rhs_a[7:0]$221
+    63/79: $1\sat_add_product$func$dpu_tile.sv:105$178.lhs[15:0]$220
+    64/79: $1\sat_add_product$func$dpu_tile.sv:105$178.$result[15:0]$219
+    65/79: $1\sat_add_product$func$dpu_tile.sv:100$177.min_ext[16:0]$218
+    66/79: $1\sat_add_product$func$dpu_tile.sv:100$177.max_ext[16:0]$217
+    67/79: $1\sat_add_product$func$dpu_tile.sv:100$177.raw_sum[16:0]$216
+    68/79: $1\sat_add_product$func$dpu_tile.sv:100$177.product_ext[16:0]$215
+    69/79: $1\sat_add_product$func$dpu_tile.sv:100$177.lhs_ext[16:0]$214
+    70/79: $1\sat_add_product$func$dpu_tile.sv:100$177.product[15:0]$213
+    71/79: $1\sat_add_product$func$dpu_tile.sv:100$177.rhs_b[7:0]$212
+    72/79: $1\sat_add_product$func$dpu_tile.sv:100$177.rhs_a[7:0]$211
+    73/79: $1\sat_add_product$func$dpu_tile.sv:100$177.lhs[15:0]$210
+    74/79: $1\sat_add_product$func$dpu_tile.sv:100$177.$result[15:0]$209
+    75/79: $0\out_sum_q[15:0]
+    76/79: $0\out_valid_q[0:0]
+    77/79: $0\acc_q[15:0]
+    78/79: $0\remaining_q[3:0]
+    79/79: $0\active_q[0:0]
+Creating decoders for process `\dpu_tile_properties.$dpu_tile_properties.sv:115$proc$174'.
+Creating decoders for process `\dpu_tile_properties.$dpu_tile_properties.sv:140$proc$151'.
+     1/5: $dpu_tile_properties.sv:158$assert$170_EN
+     2/5: $dpu_tile_properties.sv:157$assert$169_EN
+     3/5: $dpu_tile_properties.sv:151$assert$167_EN
+     4/5: $dpu_tile_properties.sv:145$assert$161_EN
+     5/5: $dpu_tile_properties.sv:144$assert$156_EN
+Creating decoders for process `\dpu_tile_properties.$dpu_tile_properties.sv:132$proc$148'.
+     1/1: $dpu_tile_properties.sv:134$assume$150_EN
+Creating decoders for process `\dpu_tile_properties.$dpu_tile_properties.sv:117$proc$129'.
+     1/5: $dpu_tile_properties.sv:126$assume$142_EN
+     2/5: $dpu_tile_properties.sv:125$assume$140_EN
+     3/5: $dpu_tile_properties.sv:124$assume$139_EN
+     4/5: $dpu_tile_properties.sv:121$assume$137_EN
+     5/5: $dpu_tile_properties.sv:120$assume$136_EN
+Creating decoders for process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+     1/79: $6\sat_add_product_model$func$dpu_tile_properties.sv:106$2.$result[15:0]$127
+     2/79: $5\sat_add_product_model$func$dpu_tile_properties.sv:106$2.$result[15:0]$125
+     3/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.$result[15:0]$112
+     4/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.min_ext[16:0]$121
+     5/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.max_ext[16:0]$120
+     6/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.raw_sum[16:0]$119
+     7/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product_ext[16:0]$118
+     8/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs_ext[16:0]$117
+     9/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product[15:0]$116
+    10/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_b[7:0]$115
+    11/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_a[7:0]$114
+    12/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs[15:0]$113
+    13/79: $5\sat_add_product_model$func$dpu_tile_properties.sv:101$1.$result[15:0]$110
+    14/79: $4\sat_add_product_model$func$dpu_tile_properties.sv:101$1.$result[15:0]$108
+    15/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.min_ext[16:0]$104
+    16/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.max_ext[16:0]$103
+    17/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.raw_sum[16:0]$102
+    18/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product_ext[16:0]$101
+    19/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs_ext[16:0]$100
+    20/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product[15:0]$99
+    21/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_b[7:0]$98
+    22/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_a[7:0]$97
+    23/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs[15:0]$96
+    24/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:106$2.$result[15:0]$95
+    25/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.$result[15:0]$85
+    26/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.min_ext[16:0]$94
+    27/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.max_ext[16:0]$93
+    28/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.raw_sum[16:0]$92
+    29/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.product_ext[16:0]$91
+    30/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.lhs_ext[16:0]$90
+    31/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.product[15:0]$89
+    32/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.rhs_b[7:0]$88
+    33/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.rhs_a[7:0]$87
+    34/79: $3\sat_add_product_model$func$dpu_tile_properties.sv:101$1.lhs[15:0]$86
+    35/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.min_ext[16:0]$82
+    36/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.max_ext[16:0]$81
+    37/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.raw_sum[16:0]$80
+    38/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product_ext[16:0]$79
+    39/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs_ext[16:0]$78
+    40/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product[15:0]$77
+    41/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_b[7:0]$76
+    42/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_a[7:0]$75
+    43/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs[15:0]$74
+    44/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:106$2.$result[15:0]$73
+    45/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.min_ext[16:0]$72
+    46/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.max_ext[16:0]$71
+    47/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.raw_sum[16:0]$70
+    48/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.product_ext[16:0]$69
+    49/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.lhs_ext[16:0]$68
+    50/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.product[15:0]$67
+    51/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.rhs_b[7:0]$66
+    52/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.rhs_a[7:0]$65
+    53/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.lhs[15:0]$64
+    54/79: $2\sat_add_product_model$func$dpu_tile_properties.sv:101$1.$result[15:0]$63
+    55/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.min_ext[16:0]$60
+    56/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.max_ext[16:0]$59
+    57/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.raw_sum[16:0]$58
+    58/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product_ext[16:0]$57
+    59/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs_ext[16:0]$56
+    60/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product[15:0]$55
+    61/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_b[7:0]$54
+    62/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_a[7:0]$53
+    63/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs[15:0]$52
+    64/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:106$2.$result[15:0]$51
+    65/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.min_ext[16:0]$50
+    66/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.max_ext[16:0]$49
+    67/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.raw_sum[16:0]$48
+    68/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.product_ext[16:0]$47
+    69/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.lhs_ext[16:0]$46
+    70/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.product[15:0]$45
+    71/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.rhs_b[7:0]$44
+    72/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.rhs_a[7:0]$43
+    73/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.lhs[15:0]$42
+    74/79: $1\sat_add_product_model$func$dpu_tile_properties.sv:101$1.$result[15:0]$41
+    75/79: $0\model_out_sum_q[15:0]
+    76/79: $0\model_out_valid_q[0:0]
+    77/79: $0\model_acc_q[15:0]
+    78/79: $0\model_remaining_q[3:0]
+    79/79: $0\model_active_q[0:0]
+
+3.3.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+3.3.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\active_q' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1328' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\remaining_q' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1333' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\acc_q' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1338' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\out_valid_q' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1343' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\out_sum_q' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1348' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.$result' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1353' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.lhs' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1358' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.rhs_a' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1363' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.rhs_b' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1368' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.product' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1373' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.lhs_ext' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1378' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.product_ext' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1383' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.raw_sum' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1388' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.max_ext' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1393' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:100$177.min_ext' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1398' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.$result' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1403' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.lhs' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1408' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.rhs_a' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1413' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.rhs_b' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1418' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.product' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1423' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.lhs_ext' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1428' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.product_ext' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1433' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.raw_sum' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1438' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.max_ext' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1443' with positive edge clock and positive level reset.
+Creating register for signal `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.\sat_add_product$func$dpu_tile.sv:105$178.min_ext' using process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+  created $adff cell `$procdff$1448' with positive edge clock and positive level reset.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:143$9$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:140$proc$151'.
+  created $dff cell `$procdff$1449' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:149$10$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:140$proc$151'.
+  created $dff cell `$procdff$1450' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:156$11$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:140$proc$151'.
+  created $dff cell `$procdff$1451' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:158$12$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:140$proc$151'.
+  created $dff cell `$procdff$1452' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:133$8$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:132$proc$148'.
+  created $dff cell `$procdff$1453' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:119$3$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:117$proc$129'.
+  created $dff cell `$procdff$1454' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:121$4$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:117$proc$129'.
+  created $dff cell `$procdff$1455' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:123$5$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:117$proc$129'.
+  created $dff cell `$procdff$1456' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:125$6$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:117$proc$129'.
+  created $dff cell `$procdff$1457' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.$past$dpu_tile_properties.sv:126$7$0' using process `\dpu_tile_properties.$dpu_tile_properties.sv:117$proc$129'.
+  created $dff cell `$procdff$1458' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\model_active_q' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1459' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\model_remaining_q' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1460' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\model_acc_q' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1461' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\model_out_valid_q' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1462' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\model_out_sum_q' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1463' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\past_valid_q' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1464' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.$result' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1465' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.lhs' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1466' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.rhs_a' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1467' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.rhs_b' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1468' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.product' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1469' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.lhs_ext' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1470' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.product_ext' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1471' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.raw_sum' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1472' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.max_ext' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1473' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:101$1.min_ext' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1474' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.$result' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1475' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1476' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_a' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1477' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.rhs_b' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1478' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1479' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.lhs_ext' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1480' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.product_ext' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1481' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.raw_sum' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1482' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.max_ext' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1483' with positive edge clock.
+Creating register for signal `\dpu_tile_properties.\sat_add_product_model$func$dpu_tile_properties.sv:106$2.min_ext' using process `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+  created $dff cell `$procdff$1484' with positive edge clock.
+
+3.3.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+3.3.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 9 empty switches in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+Removing empty process `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:75$proc$187'.
+Removing empty process `dpu_tile_properties.$dpu_tile_properties.sv:115$proc$174'.
+Found and cleaned up 5 empty switches in `\dpu_tile_properties.$dpu_tile_properties.sv:140$proc$151'.
+Removing empty process `dpu_tile_properties.$dpu_tile_properties.sv:140$proc$151'.
+Found and cleaned up 1 empty switch in `\dpu_tile_properties.$dpu_tile_properties.sv:132$proc$148'.
+Removing empty process `dpu_tile_properties.$dpu_tile_properties.sv:132$proc$148'.
+Found and cleaned up 3 empty switches in `\dpu_tile_properties.$dpu_tile_properties.sv:117$proc$129'.
+Removing empty process `dpu_tile_properties.$dpu_tile_properties.sv:117$proc$129'.
+Found and cleaned up 10 empty switches in `\dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+Removing empty process `dpu_tile_properties.$dpu_tile_properties.sv:75$proc$19'.
+Cleaned up 28 empty switches.
+
+3.3.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+<suppressed ~51 debug messages>
+Optimizing module dpu_tile_properties.
+<suppressed ~80 debug messages>
+
+3.4. Executing FUTURE pass.
+
+3.5. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+Optimizing module dpu_tile_properties.
+
+3.6. Executing CHECK pass (checking for obvious problems).
+Checking module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile...
+Checking module dpu_tile_properties...
+Found and reported 0 problems.
+
+3.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+Removed 355 unused cells and 963 unused wires.
+<suppressed ~395 debug messages>
+
+3.8. Executing OPT pass (performing simple optimizations).
+
+3.8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+Optimizing module dpu_tile_properties.
+
+3.8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 59 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 57 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 56 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 54 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+<suppressed ~15 debug messages>
+Finding identical cells in module `\dpu_tile_properties'.
+Computing hashes of 99 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+Computing hashes of 98 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+<suppressed ~3 debug messages>
+Removed a total of 6 cells.
+
+3.8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 2/2 on $mux $procmux$428.
+    dead port 1/2 on $mux $procmux$431.
+    dead port 1/2 on $mux $procmux$422.
+    dead port 1/2 on $mux $procmux$417.
+    dead port 1/2 on $mux $procmux$320.
+    dead port 2/2 on $mux $procmux$317.
+    dead port 2/2 on $mux $procmux$315.
+    dead port 1/2 on $mux $procmux$308.
+    dead port 2/2 on $mux $procmux$305.
+    dead port 2/2 on $mux $procmux$303.
+    dead port 1/2 on $mux $procmux$301.
+    dead port 2/2 on $mux $procmux$419.
+Running muxtree optimizer on module \dpu_tile_properties..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 12 multiplexer ports.
+<suppressed ~100 debug messages>
+
+3.8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+  Optimizing cells in module \dpu_tile_properties.
+Performed a total of 0 changes.
+
+3.8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 42 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 41 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 40 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+<suppressed ~6 debug messages>
+Finding identical cells in module `\dpu_tile_properties'.
+Computing hashes of 98 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+Computing hashes of 93 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+Computing hashes of 88 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+<suppressed ~30 debug messages>
+Removed a total of 12 cells.
+
+3.8.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+Removed 0 unused cells and 30 unused wires.
+<suppressed ~2 debug messages>
+
+3.8.7. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+Optimizing module dpu_tile_properties.
+
+3.8.8. Rerunning OPT passes. (Maybe there is more to do..)
+
+3.8.9. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Running muxtree optimizer on module \dpu_tile_properties..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~76 debug messages>
+
+3.8.10. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+  Optimizing cells in module \dpu_tile_properties.
+Performed a total of 0 changes.
+
+3.8.11. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 40 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding identical cells in module `\dpu_tile_properties'.
+Computing hashes of 88 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+Removed a total of 0 cells.
+
+3.8.12. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+
+3.8.13. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+Optimizing module dpu_tile_properties.
+
+3.8.14. Finished fast OPT passes. (There is nothing left to do.)
+
+3.9. Executing WREDUCE pass (reducing word size of cells).
+Removed top 3 bits (of 4) from port B of cell $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:101$eq$276 ($eq).
+Converting cell $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:46$add$288 ($add) from unsigned to signed.
+Removed top 1 bits (of 17) from port A of cell $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:46$add$288 ($add).
+Removed top 1 bits (of 17) from port B of cell $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:46$add$288 ($add).
+Removed top 1 bits (of 17) from port B of cell $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:50$gt$289 ($gt).
+Removed top 1 bits (of 17) from port B of cell $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$dpu_tile.sv:52$lt$291 ($lt).
+Removed top 3 bits (of 4) from port B of cell dpu_tile_properties.$dpu_tile_properties.sv:102$eq$111 ($eq).
+
+3.10. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+
+3.11. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+3.12. Executing OPT pass (performing simple optimizations).
+
+3.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+Optimizing module dpu_tile_properties.
+
+3.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 40 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding identical cells in module `\dpu_tile_properties'.
+Computing hashes of 88 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+Removed a total of 0 cells.
+
+3.12.3. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+
+3.12.4. Finished fast OPT passes.
+
+3.13. Executing SORT pass.
+
+3.14. Printing statistics.
+
+=== $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile ===
+
+        +----------Local Count, excluding submodules.
+        | 
+       50 wires
+      281 wire bits
+       20 public wires
+       85 public wire bits
+       12 ports
+       44 port bits
+       40 cells
+        1   $add
+        5   $adff
+        1   $eq
+        1   $gt
+        5   $logic_and
+        3   $logic_not
+        1   $lt
+        1   $mul
+       21   $mux
+        1   $sub
+
+=== dpu_tile_properties ===
+
+        +----------Local Count, excluding submodules.
+        | 
+       81 wires
+      166 wire bits
+       16 public wires
+       51 public wire bits
+        2 ports
+        2 port bits
+       87 cells
+        6   $anyseq
+       12   $check
+       14   $dff
+        8   $eq
+       10   $logic_and
+        7   $logic_not
+        1   $logic_or
+       28   $mux
+        1   $sub
+        1 submodules
+        1   $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+      127 dpu_tile_properties
+       40 $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile
+
+        +----------Count including submodules.
+        | 
+      131 wires
+      447 wire bits
+       36 public wires
+      136 public wire bits
+       14 ports
+       46 port bits
+        - memories
+        - memory bits
+        - processes
+      127 cells
+        1   $add
+        5   $adff
+        6   $anyseq
+       12   $check
+       14   $dff
+        9   $eq
+        1   $gt
+       15   $logic_and
+       10   $logic_not
+        1   $logic_or
+        1   $lt
+        1   $mul
+       49   $mux
+        2   $sub
+        1 submodules
+        1   $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile
+
+3.15. Executing CHECK pass (checking for obvious problems).
+Checking module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile...
+Checking module dpu_tile_properties...
+Found and reported 0 problems.
+
+4. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `dpu_tile_properties'. Setting top module to dpu_tile_properties.
+
+4.1. Analyzing design hierarchy..
+Top module:  \dpu_tile_properties
+Used module:     $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile
+
+4.2. Analyzing design hierarchy..
+Top module:  \dpu_tile_properties
+Used module:     $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile
+Removed 0 unused modules.
+Module dpu_tile_properties directly or indirectly contains formal properties -> setting "keep" attribute.
+
+5. Executing jny backend.
+
+6. Executing RTLIL backend.
+Output filename: ../model/design.il
+
+End of script. Logfile hash: 5764c9910f, time: 0.05s, user: 0.05s, system: 0.01s, MEM: 23.80 MB peak
+Yosys 0.70+201 (git sha1 0ad867ab5, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 17% 1x proc_mux (0 sec), 16% 2x hierarchy (0 sec), ...

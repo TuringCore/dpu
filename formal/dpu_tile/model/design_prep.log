@@ -1,0 +1,91 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.70+201 (git sha1 0ad867ab5, Release, Clang /usr/bin/clang++ 21.1.8)
+
+-- Executing script file `design_prep.ys' --
+
+1. Executing RTLIL frontend.
+Input filename: design.il
+
+2. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+Found 0 SCCs in module dpu_tile_properties.
+Found 0 SCCs.
+
+3. Executing SIMPLEMAP pass (map simple cells to gate primitives).
+
+4. Executing MEMORY_NORDFF pass (extracting $dff cells from memories).
+
+5. Executing ASYNC2SYNC pass.
+Replacing $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$procdff$1328 ($adff): ARST=\rst_n, D=$0\active_q[0:0], Q=\active_q
+Replacing $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$procdff$1333 ($adff): ARST=\rst_n, D=$0\remaining_q[3:0], Q=\remaining_q
+Replacing $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$procdff$1338 ($adff): ARST=\rst_n, D=$0\acc_q[15:0], Q=\acc_q
+Replacing $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$procdff$1343 ($adff): ARST=\rst_n, D=$0\out_valid_q[0:0], Q=\out_valid_q
+Replacing $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.$procdff$1348 ($adff): ARST=\rst_n, D=$0\out_sum_q[15:0], Q=\out_sum_q
+
+6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+Removed 47 unused cells and 47 unused wires.
+<suppressed ~48 debug messages>
+
+7. Executing FORMALFF pass.
+
+8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+Removed 2 unused cells and 2 unused wires.
+<suppressed ~4 debug messages>
+
+9. Executing CHECK pass (checking for obvious problems).
+Checking module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile...
+Checking module dpu_tile_properties...
+Found and reported 0 problems.
+
+10. Executing SETUNDEF pass (replace undef values with defined constants).
+
+11. Executing OPT pass (performing simple optimizations).
+
+11.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile.
+Optimizing module dpu_tile_properties.
+<suppressed ~1 debug messages>
+
+11.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Computing hashes of 50 cells of `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding duplicate cells in `$paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile'.
+Finding identical cells in module `\dpu_tile_properties'.
+Computing hashes of 99 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+Computing hashes of 97 cells of `\dpu_tile_properties'.
+Finding duplicate cells in `\dpu_tile_properties'.
+<suppressed ~6 debug messages>
+Removed a total of 2 cells.
+
+11.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+11.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+Removed 0 unused cells and 3 unused wires.
+<suppressed ~1 debug messages>
+
+11.5. Finished fast OPT passes.
+
+12. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module $paramod$0fb4992f7be01b4c335eb24931f57d75dd84a5a1\dpu_tile..
+Finding unused cells or wires in module \dpu_tile_properties..
+Removed 0 unused cells and 15 unused wires.
+<suppressed ~2 debug messages>
+
+13. Executing RTLIL backend.
+Output filename: ../model/design_prep.il
+
+End of script. Logfile hash: cfcb0ce962, time: 0.01s, user: 0.01s, system: 0.01s, MEM: 18.91 MB peak
+Yosys 0.70+201 (git sha1 0ad867ab5, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 37% 4x opt_clean (0 sec), 11% 2x write_rtlil (0 sec), ...

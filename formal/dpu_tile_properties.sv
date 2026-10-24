@@ -112,6 +112,8 @@ module dpu_tile_properties (
     end
 
     // Formal assumptions
+    initial assume(!rst_n);
+
     always_ff @(posedge clk) begin
         if (past_valid_q && rst_n) begin
             if ($past(cfg_valid && !cfg_ready)) begin
@@ -159,4 +161,3 @@ module dpu_tile_properties (
     end
 
 endmodule
-

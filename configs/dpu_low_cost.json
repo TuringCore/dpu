@@ -1,0 +1,19 @@
+{
+  "name": "dpu-low-cost-hypothesis",
+  "int8_tops": 16,
+  "int4_speedup": 2.0,
+  "clock_ghz": 0.8,
+  "compute_utilization": 0.55,
+  "vector_gelems_per_s": 128,
+  "softmax_cost_per_elem": 4.0,
+  "sram_mb": 8,
+  "sram_act_fraction": 0.5,
+  "sram_bw_gbs": 2000,
+  "dram_bw_gbs": 100,
+  "dram_gb": 16,
+  "dma_startup_us": 2.0,
+  "precision_convert_gelems_per_s": 256,
+  "weight_bits": 8,
+  "act_bits": 8,
+  "power_w": 50
+}

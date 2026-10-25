@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compiler.workload import MAC_KINDS, Op, Workload
+from compiler.workload import KNOWN_KINDS, MAC_KINDS, Op, Workload
 
 from .config import ArchConfig
 
@@ -54,6 +54,10 @@ class SimResult:
 
 
 def _op_time(op: Op, a: ArchConfig) -> OpResult:
+    if not op.supported:
+        raise ValueError(f"cannot simulate unsupported operator {op.name!r} ({op.kind})")
+    if op.kind not in KNOWN_KINDS:
+        raise ValueError(f"unknown operator kind {op.kind!r} for {op.name!r}")
     wb, ab = a.weight_bits / 8, a.act_bits / 8
     weight_b = op.weight_elems * wb
     act_b = (op.input_elems + op.output_elems) * ab
@@ -81,16 +85,18 @@ def _op_time(op: Op, a: ArchConfig) -> OpResult:
 
 def simulate(w: Workload, a: ArchConfig) -> SimResult:
     a.validate()
+    # Never return an apparently complete latency when any part of the workload
+    # has no performance model.
+    for op in [*w.ops, *w.per_image_ops]:
+        if not op.supported or op.kind not in KNOWN_KINDS:
+            _op_time(op, a)
     r = SimResult(LABEL, a.name)
     for op in w.ops:
-        if not op.supported:
-            r.notes.append(f"unsupported op skipped: {op.name}")
-            continue
         r.per_op.append(_op_time(op, a))
     r.step_latency_s = sum(o.time_s for o in r.per_op)
     r.dram_bytes_per_step = sum(o.dram_bytes for o in r.per_op)
     # per_image_ops (VAE/text encoder), when present, run once per image
-    extra = [_op_time(op, a) for op in w.per_image_ops if op.supported]
+    extra = [_op_time(op, a) for op in w.per_image_ops]
     extra_t = sum(o.time_s for o in extra)
     if not w.per_image_ops:
         r.notes.append("VAE decode and text encoders are NOT included (no per_image_ops in workload); latency is a lower bound")

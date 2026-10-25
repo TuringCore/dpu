@@ -1,6 +1,6 @@
 SIM_OUT := simv
 
-.PHONY: sim clean formal sky130-synth sky130-synth-local sky130-synth-yosys-only
+.PHONY: sim clean formal sky130-synth sky130-synth-local sky130-synth-yosys-only perf perf-sim perf-synth
 
 # Frozen tile configuration
 DATA_W ?= 8
@@ -42,6 +42,21 @@ sky130-synth-local:
 	@test -f "$(SKY130_LIB)" || { echo "Liberty not found: $(SKY130_LIB). Set SKY130_LIB or PDK_ROOT."; exit 1; }
 	@mkdir -p $(SYNTH_DIR)
 	yosys -q -p "$(YOSYS_READ); synth -top dpu_tile -flatten; dfflibmap -liberty $(SKY130_LIB); abc -liberty $(SKY130_LIB); opt_clean -purge; check -assert; tee -o $(SYNTH_DIR)/stat.txt stat -liberty $(SKY130_LIB); write_verilog -noattr $(SYNTH_DIR)/dpu_tile_sky130.v"
+
+# Performance scorecard: cycle-accurate sim + yosys stat/ltp -> printed table.
+PERF_DIR := build/perf
+perf-sim:
+	@mkdir -p $(PERF_DIR)
+	iverilog -g2012 -o $(PERF_DIR)/perf.vvp rtl/dpu_tile.sv tb/dpu_tile_perf_tb.sv
+	vvp $(PERF_DIR)/perf.vvp | tee $(PERF_DIR)/sim.log
+
+perf-synth:
+	@command -v yosys >/dev/null 2>&1 || { echo "yosys is not installed"; exit 1; }
+	@mkdir -p $(PERF_DIR)
+	yosys -p "$(YOSYS_READ); synth -top dpu_tile -flatten; check -assert; stat; ltp -noff" > $(PERF_DIR)/synth.log
+
+perf: perf-sim perf-synth
+	python3 scripts/perf_report.py --sim $(PERF_DIR)/sim.log --synth $(PERF_DIR)/synth.log --data-w $(DATA_W) --acc-w $(ACC_W) --len-w $(LEN_W)
 
 clean:
 	rm -f $(SIM_OUT) *.vcd

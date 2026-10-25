@@ -39,6 +39,12 @@ Diffusion workloads spend most of their compute in repeated multiply-accumulate 
 
 That is exactly the kind of primitive that can be made small enough to prove, stable enough to tape out, and useful enough to scale later.
 
+## Economic rationale
+
+Custom silicon is not automatically cheaper than a GPU: its case depends on a stable, high-volume workload, measured end-to-end efficiency, and amortizing development and manufacturing costs across enough deployments. GPU purchase and cloud prices can move with supply and demand, but GPUs also bring mature software, high throughput, and integrated memory bandwidth. Compare complete systems—including memory, host, power, utilization, and support—not just chip or hourly prices.
+
+The DPU’s plausible opportunity is a narrow, quantized inference workload where predictable power, deployment cost, privacy, or supply control outweighs the flexibility of a GPU. This tile is only a verifiable building block, not a GPU substitute; a credible cost-per-inference advantage requires scaling compute, adding local memory and data reuse, and validating the complete design against real workloads before committing to pilot or volume production.
+
 ## Production path
 
 The cleanest way to get this design to silicon is a single, disciplined sequence with decision points built in.

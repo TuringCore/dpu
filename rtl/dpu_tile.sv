@@ -2,8 +2,8 @@
 
 module dpu_tile #(
     parameter int DATA_W = 8,
-    parameter int ACC_W  = 24,
-    parameter int LEN_W  = 8
+    parameter int ACC_W  = 16,
+    parameter int LEN_W  = 6
 ) (
     input  logic                         clk,
     input  logic                         rst_n,
@@ -111,5 +111,4 @@ module dpu_tile #(
     end
 
 endmodule
-
 

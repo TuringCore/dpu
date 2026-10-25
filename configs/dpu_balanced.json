@@ -1,0 +1,19 @@
+{
+  "name": "dpu-balanced-hypothesis",
+  "int8_tops": 32,
+  "int4_speedup": 2.0,
+  "clock_ghz": 1.0,
+  "compute_utilization": 0.7,
+  "vector_gelems_per_s": 256,
+  "softmax_cost_per_elem": 4.0,
+  "sram_mb": 16,
+  "sram_act_fraction": 0.5,
+  "sram_bw_gbs": 4000,
+  "dram_bw_gbs": 200,
+  "dram_gb": 32,
+  "dma_startup_us": 1.0,
+  "precision_convert_gelems_per_s": 512,
+  "weight_bits": 8,
+  "act_bits": 8,
+  "power_w": 75
+}

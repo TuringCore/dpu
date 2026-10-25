@@ -1,0 +1,19 @@
+{
+  "name": "dpu-high-performance-hypothesis",
+  "int8_tops": 64,
+  "int4_speedup": 2.0,
+  "clock_ghz": 1.2,
+  "compute_utilization": 0.8,
+  "vector_gelems_per_s": 512,
+  "softmax_cost_per_elem": 4.0,
+  "sram_mb": 64,
+  "sram_act_fraction": 0.5,
+  "sram_bw_gbs": 8000,
+  "dram_bw_gbs": 800,
+  "dram_gb": 64,
+  "dma_startup_us": 0.5,
+  "precision_convert_gelems_per_s": 1024,
+  "weight_bits": 8,
+  "act_bits": 8,
+  "power_w": 150
+}

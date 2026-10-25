@@ -1,0 +1,33 @@
+{
+  "format": "turing-sdxl-environment-audit/1",
+  "status": "blocked_before_model_load",
+  "observed_at_utc": "2026-10-25",
+  "model": {
+    "id": "stabilityai/stable-diffusion-xl-base-1.0",
+    "revision": null,
+    "revision_status": "Not resolved; Hugging Face API access failed due to blocked DNS/network"
+  },
+  "environment": {
+    "python": "3.12.3",
+    "torch_installed": false,
+    "diffusers_installed": false,
+    "transformers_installed": false,
+    "bitsandbytes_installed": false,
+    "pytest_installed": false,
+    "nvidia_smi_available": false,
+    "cuda_availability": "Not verifiable because torch is not installed"
+  },
+  "benchmark": {
+    "full_sdxl_inference": "Not run",
+    "gpu_fp16": "Not measured",
+    "gpu_quantized": "Not measured",
+    "dpu_exact_trace_simulation": "Not simulated",
+    "reason": "No CUDA runtime/GPU tools or ML dependencies are available; model revision could not be fetched."
+  },
+  "static_only_check": {
+    "command": "python -m benchmarks.profile --model sdxl --resolution 1024 --steps 20 --measure --output /tmp/dpu-sdxl-static.json",
+    "result": "Static graph emitted; CUDA unavailable message; no model weights loaded and no timing measured.",
+    "ops": 1841,
+    "unet_macs_per_forward": 6761200000000
+  }
+}

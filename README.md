@@ -56,9 +56,10 @@ The cleanest way to get this design to silicon is a single, disciplined sequence
    - ensure the reference model and implementation agree under the edge cases that matter
    - this is the point where the design moves from illustrative to engineering-grade
 
-4. Run physical estimates on SKY130 early
-   - target area, speed, power, package, IO, and thermal assumptions before committing to a tape-out path
-   - if the area/frequency model is weak, simplify before manufacturing
+4. Run the checked-in SKY130 block hardening setup
+   - run simulation, formal, mapped synthesis, then OpenLane using `openlane/config.json`
+   - inspect timing, area, DRC/LVS, antenna, and routing reports; the target constraints are estimates, not foundry signoff
+   - record the exact PDK and flow versions and review all waivers before selecting a submission route
 
 5. Lock the manufacturing posture before the design becomes “final”
    - standard package, simple power rails, straightforward clocking, commodity bring-up board
@@ -76,7 +77,31 @@ This is the real roadmap: behavior first, proof next, physical estimate third, t
 Two tiers:
 
 - **Lightweight:** Yosys synthesis in CI (`make sky130-synth-yosys-only`) for fast validation, no Docker.
-- **Full signoff:** OpenLane P&R run locally with upstream [OpenLane](https://github.com/The-OpenROAD-Project/OpenLane) (see `openlane/README.md` and `docs/SYNTHESIS.md`).
+- **Block hardening:** OpenLane P&R locally with upstream [OpenLane](https://github.com/The-OpenROAD-Project/OpenLane), using the checked-in design config, SDC, and pin-order file (see `openlane/README.md` and `docs/SYNTHESIS.md`). This is not full tapeout signoff.
+
+## SKY130 submission: next steps
+
+This repository currently implements one parameterized dot-product tile, not a
+complete Stable Diffusion accelerator or a pad-limited chip. Before submitting
+to a shuttle or foundry, the project still needs to:
+
+1. Freeze the RTL/interface and supported parameter values; complete functional,
+   formal, lint, and gate-level verification, and resolve or document warnings.
+2. Run the configured OpenLane hardening flow and review timing/STA, DRC, LVS,
+   antenna, density, and routing results against the selected submission
+   program's rules; repeat after any changes and archive the reports.
+3. Define the actual chip-level integration: required accelerator/system
+   wrapper, IO/pad ring and ESD strategy, package, power distribution, clock and
+   reset implementation, and board-level interface. This block configuration
+   does not provide these.
+4. Complete program-required DFT/scan, power integrity (IR drop/EM), reliability,
+   and signoff checks; these are not currently implemented or demonstrated here.
+5. Select a SKY130 shuttle/foundry route and follow its current submission
+   checklist for PDK/flow versions, permitted cells/macros, GDS/OASIS and
+   LEF/abstract views, netlists, timing/physical reports, waivers, licensing,
+   and submission metadata.
+6. Prepare the bring-up plan and deliverables (test vectors, firmware or host
+   tooling, board, and validation plan) with the submission partner.
 
 ## Supply chain tradeoffs
 

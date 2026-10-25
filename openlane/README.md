@@ -11,7 +11,13 @@ repo independent of any single maintained fork and CI fast and reliable.
 | Tier | Where | Purpose |
 | --- | --- | --- |
 | Yosys synthesis | CI | Fast check that RTL synthesizes cleanly (no Docker, PDK-agnostic) |
-| OpenLane P&R | Local/manual | Floorplan, placement, CTS, routing, STA, DRC/LVS for MPW signoff |
+| OpenLane P&R | Local/manual | Hardening run: floorplan, placement, CTS, routing, STA, and physical verification reports |
+
+The OpenLane design configuration, timing constraints, and pin ordering are in this
+directory. They target `dpu_tile` with `DATA_W=8`, `ACC_W=16`, and `LEN_W=6`.
+The run is block-level implementation collateral, not a tapeout signoff package:
+review all reports and complete the project- and shuttle-specific checks before
+submitting GDSII.
 
 ## Running upstream OpenLane locally
 
@@ -24,15 +30,15 @@ make            # installs the PDK (sky130A) and pulls the tooling image
 make test       # sanity check of the install
 ```
 
-Then, from this repo, point OpenLane at a design directory containing `config.json`
-(top `dpu_tile`, `DATA_W=8`, `ACC_W=16`, `LEN_W=6`, 100 MHz i.e. `CLOCK_PERIOD=10` ns,
-SDC from the existing constraints) and run:
+From the repository root, set `OPENLANE_ROOT` to that checkout and run:
 
 ```sh
 export OPENLANE_ROOT=/path/to/OpenLane
-make sky130-synth        # requires Docker + OpenLane
+make sky130-synth
 ```
 
-or directly inside the OpenLane checkout: `make mount` then `./flow.tcl -design /path/to/dpu/openlane`.
+The target uses the checked-in `openlane/config.json`. Alternatively, from the
+OpenLane checkout run `make mount`, then
+`./flow.tcl -design /path/to/dpu/openlane`.
 
 See `docs/SYNTHESIS.md` for the synthesis-only flow.

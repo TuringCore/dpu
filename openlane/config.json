@@ -1,0 +1,13 @@
+{
+  "DESIGN_NAME": "dpu_tile",
+  "VERILOG_FILES": "dir::../rtl/dpu_tile.sv",
+  "SYNTH_PARAMETERS": "DATA_W=8 ACC_W=16 LEN_W=6",
+  "PDK": "sky130A",
+  "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+  "CLOCK_PORT": "clk",
+  "CLOCK_PERIOD": 10,
+  "PNR_SDC_FILE": "dir::dpu_tile.sdc",
+  "SIGNOFF_SDC_FILE": "dir::dpu_tile.sdc",
+  "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
+  "FP_CORE_UTIL": 35
+}

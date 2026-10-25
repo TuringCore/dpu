@@ -1,0 +1,14 @@
+[options]
+mode cover
+depth 70
+
+[engines]
+smtbmc boolector
+
+[script]
+read -formal dpu_tile.sv dpu_tile_properties.sv
+prep -top dpu_tile_properties
+
+[files]
+rtl/dpu_tile.sv
+formal/dpu_tile_properties.sv

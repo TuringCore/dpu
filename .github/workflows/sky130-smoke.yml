@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   sim:
     runs-on: ubuntu-latest
@@ -13,12 +16,12 @@ jobs:
       - run: make sim
 
   formal:
-    name: formal (Yosys/SymbiYosys)
+    name: formal (prove + cover)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: YosysHQ/setup-oss-cad-suite@v3
-      - name: Formal verification (SymbiYosys prove)
+      - name: Formal verification (SymbiYosys prove + cover)
         run: |
           set -o pipefail
           make formal 2>&1 | tee formal.log
@@ -27,9 +30,9 @@ jobs:
         run: |
           {
             echo "### Formal verification (Yosys/SymbiYosys)"
-            if grep -q "DONE (PASS" formal.log; then echo "**PASS**"; else echo "**FAIL**"; fi
+            if [ "$(grep -c "DONE (PASS" formal.log)" -ge 2 ]; then echo "**PASS**"; else echo "**FAIL**"; fi
             echo '```'
-            grep -E "summary|DONE|assert|Status" formal.log | tail -20
+            grep -Ei "summary|DONE|assert|cover|Status" formal.log | tail -20
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
@@ -39,6 +42,7 @@ jobs:
           path: |
             formal.log
             formal/dpu_tile/
+            formal/dpu_tile_cover/
           if-no-files-found: ignore
 
   synthesis-check:
@@ -48,6 +52,15 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y yosys
       - name: Yosys synthesis (no Docker, PDK-agnostic)
         run: make sky130-synth-yosys-only
+
+  lint:
+    name: RTL lint (Verilator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y verilator
+      - name: Lint RTL
+        run: verilator --lint-only --Wall --top-module dpu_tile rtl/dpu_tile.sv
 
   perf:
     name: perf (latency / throughput / area / workload scorecard)

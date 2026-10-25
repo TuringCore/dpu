@@ -4,7 +4,7 @@ Example:
   python -m benchmarks.run_sdxl --revision <40-char-hub-commit> --mode fp16 \
       --output-dir benchmarks/results/fp16
   python -m benchmarks.run_sdxl --revision <same-commit> --mode bnb-int8 \
-      --reference-image benchmarks/results/fp16/image.png \
+      --reference-results benchmarks/results/fp16/results.json \
       --output-dir benchmarks/results/bnb-int8
 """
 from __future__ import annotations
@@ -13,13 +13,11 @@ import argparse
 import hashlib
 import json
 import math
-import os
 import platform
 import re
 import statistics
 import sys
 import time
-from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -48,10 +46,24 @@ def validate_result_document(result: dict[str, Any]) -> None:
     if result["configuration"].get("batch_size") != 1:
         raise ValueError("the reproducible SDXL benchmark requires batch size 1")
     samples = result["raw_latency_samples"].get("end_to_end_ms")
+    expected_samples = result["configuration"].get("repetitions")
     if not isinstance(samples, list) or len(samples) < 3 or not all(
         isinstance(x, (int, float)) and math.isfinite(x) and x > 0 for x in samples
     ):
         raise ValueError("at least three finite positive end-to-end latency samples are required")
+    if len(samples) != expected_samples:
+        raise ValueError("latency sample count must match configured repetitions")
+    quantization = result["quantization"]
+    if quantization.get("weight_bits") not in (8, 16):
+        raise ValueError("benchmark quantization metadata must declare 8-bit or 16-bit weights")
+    if quantization.get("activation_dtype") != "float16":
+        raise ValueError("this benchmark's activations must be reported as float16")
+    if quantization.get("weight_bits") == 8 and not quantization.get(
+        "actual_int8_runtime_state_verified"
+    ):
+        raise ValueError("INT8 results require verified runtime quantized-weight state")
+    if quantization.get("weight_bits") == 8 and not quantization.get("backend_version"):
+        raise ValueError("INT8 results must record the quantization backend version")
 
 
 def _tensor_shapes(value: Any) -> tuple[list[list[int]], list[str]]:
@@ -112,7 +124,7 @@ def _resident_tensor_bytes(tensors: list[Any]) -> int:
     return total
 
 
-def _image_error(reference: Path, generated: Any) -> dict[str, Any]:
+def _image_error(reference: Path, generated: Any, reference_result_sha256: str) -> dict[str, Any]:
     import numpy as np
     from PIL import Image
 
@@ -125,6 +137,7 @@ def _image_error(reference: Path, generated: Any) -> dict[str, Any]:
     return {
         "metric": "paired RGB pixel error (not a semantic-quality metric)",
         "reference_sha256": hashlib.sha256(reference.read_bytes()).hexdigest(),
+        "reference_result_sha256": reference_result_sha256,
         "mse": mse,
         "psnr_db": None if mse == 0 else 10.0 * math.log10((255.0 ** 2) / mse),
     }
@@ -135,7 +148,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--revision", required=True, help="full 40-character Hugging Face commit SHA")
     parser.add_argument("--mode", choices=("fp16", "bnb-int8"), required=True)
     parser.add_argument("--output-dir", required=True)
-    parser.add_argument("--reference-image", help="same-prompt FP16 PNG; required for bnb-int8")
+    parser.add_argument(
+        "--reference-results",
+        help="FP16 results.json from the same model revision and inference settings; required for bnb-int8",
+    )
     parser.add_argument("--prompt", default="a photograph of an astronaut riding a horse")
     parser.add_argument("--negative-prompt", default="")
     parser.add_argument("--seed", type=int, default=2025)
@@ -146,12 +162,47 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--revision must be the full 40-character model commit SHA")
     if args.warmups < 1 or args.repetitions < 3:
         parser.error("use at least one warm-up and three measured repetitions")
-    if args.mode == "bnb-int8" and not args.reference_image:
-        parser.error("--reference-image is required for bnb-int8 quality comparison")
+    if args.mode == "bnb-int8" and not args.reference_results:
+        parser.error("--reference-results is required for bnb-int8 quality comparison")
+
+    reference_path = None
+    reference_result_sha256 = None
+    if args.reference_results:
+        result_path = Path(args.reference_results)
+        try:
+            reference_result = json.loads(result_path.read_text(encoding="utf-8"))
+            validate_result_document(reference_result)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            parser.error(f"invalid --reference-results artifact: {exc}")
+        if reference_result["quantization"].get("weight_bits") != 16:
+            parser.error("--reference-results must describe FP16 weights")
+        if reference_result["model"]["revision"] != args.revision:
+            parser.error("FP16 reference must use the same model commit SHA")
+        expected = {
+            "resolution": 1024,
+            "batch_size": 1,
+            "steps": 20,
+            "guidance_scale": 7.5,
+            "scheduler": "DPMSolverMultistepScheduler (dpmsolver++, Karras disabled)",
+            "prompt": args.prompt,
+            "negative_prompt": args.negative_prompt,
+            "seed": args.seed,
+        }
+        if any(reference_result["configuration"].get(k) != v for k, v in expected.items()):
+            parser.error("FP16 reference settings do not match this quantized run")
+        reference_path = (
+            result_path.parent / reference_result["artifacts"].get("image", "")
+        ).resolve()
+        if result_path.parent.resolve() not in reference_path.parents:
+            parser.error("FP16 reference image must be inside the reference artifact directory")
+        if not reference_path.is_file():
+            parser.error("FP16 reference image listed in results.json is missing")
+        reference_result_sha256 = hashlib.sha256(result_path.read_bytes()).hexdigest()
 
     try:
         import torch
         import diffusers
+        import transformers
         from diffusers import DPMSolverMultistepScheduler, StableDiffusionXLPipeline
     except ImportError as exc:
         raise SystemExit(
@@ -234,27 +285,32 @@ def main(argv: list[str] | None = None) -> int:
         for _ in range(args.warmups):
             infer()
         torch.cuda.synchronize()
+        denoiser_events.clear()
+        denoiser_calls = 0
         if bnb is not None:
             initialized = sum(
                 isinstance(getattr(mod.state, "CB", None), torch.Tensor)
                 and mod.state.CB.dtype == torch.int8
                 for mod in quantized_modules.values()
             )
-            if initialized == 0:
-                raise RuntimeError("bitsandbytes did not initialize any INT8 quantized weight state")
+            if initialized != len(quantized_modules):
+                raise RuntimeError(
+                    f"INT8 runtime state initialized for {initialized}/{len(quantized_modules)} "
+                    "quantized UNet linear layers"
+                )
 
         model_tensors = [
             tensor
             for component in (pipe.unet, pipe.vae, pipe.text_encoder, pipe.text_encoder_2)
             for tensor in [*(p for p in component.parameters()), *(b for b in component.buffers())]
         ]
-        model_bytes = _resident_tensor_bytes(model_tensors)
         if bnb is not None:
-            model_bytes += _resident_tensor_bytes([
+            model_tensors.extend([
                 tensor for mod in quantized_modules.values()
                 for tensor in (getattr(mod.state, "CB", None), getattr(mod.state, "SCB", None))
                 if isinstance(tensor, torch.Tensor)
             ])
+        model_bytes = _resident_tensor_bytes(model_tensors)
         baseline_allocated = int(torch.cuda.memory_allocated())
         torch.cuda.reset_peak_memory_stats()
 
@@ -271,6 +327,7 @@ def main(argv: list[str] | None = None) -> int:
             events = denoiser_events[start_idx:]
             denoiser_ms.append(sum(a.elapsed_time(b) for a, b in events if b is not None))
             denoiser_calls = 0
+        peak_vram_allocated = int(torch.cuda.max_memory_allocated())
         pre_handle.remove()
         post_handle.remove()
         assert last_image is not None
@@ -351,12 +408,17 @@ def main(argv: list[str] | None = None) -> int:
             "quantization": {
                 "scheme": "none" if bnb is None else "bitsandbytes Linear8bitLt, UNet Linear weights INT8",
                 "weight_bits": 16 if bnb is None else 8,
-                "activation_dtype": "float16; bitsandbytes dynamically quantizes matrix operands internally",
+                "activation_dtype": "float16",
+                "matrix_operand_quantization": (
+                    "none" if bnb is None else
+                    "bitsandbytes vectorwise INT8 for Linear8bitLt matrix operands"
+                ),
                 "quantized_module_paths": replaced,
                 "quantized_modules_with_runtime_int8_state": runtime_int8,
                 "actual_int8_runtime_state_verified": bnb is not None and runtime_int8 > 0,
-                "backend_version": None if bnb is None else bnb.__version__,
-                "non-Linear UNet layers and VAE/text encoders remain FP16",
+                "backend_version": None if bnb is None else getattr(bnb, "__version__", "unknown"),
+                "weight_group_size": None if bnb is None else "per-output-channel scales (no fixed group size)",
+                "scope": "non-Linear UNet layers and VAE/text encoders remain FP16",
             },
             "environment": {
                 "python": sys.version.split()[0],
@@ -364,6 +426,7 @@ def main(argv: list[str] | None = None) -> int:
                 "torch": torch.__version__,
                 "cuda_runtime": torch.version.cuda,
                 "diffusers": diffusers.__version__,
+                "transformers": transformers.__version__,
                 "gpu": torch.cuda.get_device_name(0),
                 "gpu_total_memory_bytes": int(torch.cuda.get_device_properties(0).total_memory),
             },
@@ -375,7 +438,7 @@ def main(argv: list[str] | None = None) -> int:
                 "end_to_end_median_ms": statistics.median(end_to_end_ms),
                 "images_per_second": 1000.0 / statistics.median(end_to_end_ms),
                 "denoiser_only_median_ms": statistics.median(denoiser_ms),
-                "peak_vram_allocated_bytes": int(torch.cuda.max_memory_allocated()),
+                "peak_vram_allocated_bytes": peak_vram_allocated,
                 "baseline_vram_allocated_bytes": baseline_allocated,
                 "model_resident_bytes": model_bytes,
                 "gpu_power_w": None,
@@ -391,7 +454,7 @@ def main(argv: list[str] | None = None) -> int:
         }
         if args.mode == "bnb-int8":
             result["summary"]["image_quality_vs_fp16"] = _image_error(
-                Path(args.reference_image), last_image
+                reference_path, last_image, reference_result_sha256
             )
         validate_result_document(result)
         (output_dir / "module_graph.json").write_text(

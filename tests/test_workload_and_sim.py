@@ -4,6 +4,8 @@ from dataclasses import replace
 import pytest
 
 from benchmarks import profile as prof
+from benchmarks.readme_table import render_table, update_readme
+from benchmarks.run_sdxl import RESULT_FORMAT, validate_result_document
 from compiler.sdxl_graph import build_sdxl_workload
 from compiler.workload import Op, Workload
 from simulator.config import ArchConfig
@@ -105,3 +107,118 @@ def test_cli_profile_static(tmp_path):
     out = tmp_path / "s.json"
     assert prof.main(["--resolution", "512", "--steps", "2", "--output", str(out)]) == 0
     assert json.loads(out.read_text())["measured"]["gpu_timings"] is None
+
+
+@pytest.mark.parametrize(
+    "op",
+    [
+        Op("unsupported", "linear", macs=10, supported=False),
+        Op("unknown-kind", "mystery", vector_elems=10),
+    ],
+)
+def test_simulator_rejects_unsupported_or_unknown_ops(op):
+    with pytest.raises(ValueError, match="unsupported|unknown"):
+        simulate(Workload("test", 32, 1, 1, False, "int8", [op]), ArchConfig())
+
+
+def _result_document(weight_bits=16, runtime_int8=False):
+    return {
+        "format": RESULT_FORMAT,
+        "status": "completed",
+        "model": {"revision": "a" * 40},
+        "configuration": {
+            "resolution": 1024, "batch_size": 1, "repetitions": 3,
+            "steps": 20, "guidance_scale": 7.5, "seed": 2025,
+        },
+        "quantization": {
+            "weight_bits": weight_bits,
+            "actual_int8_runtime_state_verified": runtime_int8,
+            "backend_version": "test-version",
+            "activation_dtype": "float16",
+        },
+        "environment": {},
+        "raw_latency_samples": {"end_to_end_ms": [1000.0, 1010.0, 990.0]},
+        "summary": {
+            "end_to_end_median_ms": 1000.0,
+            "images_per_second": 1.0,
+            "peak_vram_allocated_bytes": 1024**3,
+        },
+        "artifacts": {},
+    }
+
+
+def test_benchmark_result_schema_requires_pinned_revision_and_quant_metadata():
+    validate_result_document(_result_document())
+    with pytest.raises(ValueError, match="revision"):
+        doc = _result_document()
+        doc["model"]["revision"] = "main"
+        validate_result_document(doc)
+    with pytest.raises(ValueError, match="runtime"):
+        validate_result_document(_result_document(weight_bits=8))
+
+
+def test_benchmark_result_schema_requires_repetition_samples():
+    doc = _result_document()
+    doc["raw_latency_samples"]["end_to_end_ms"] = [1000.0]
+    with pytest.raises(ValueError, match="three"):
+        validate_result_document(doc)
+
+
+def test_quantized_runner_rejects_mismatched_fp16_reference(tmp_path):
+    from benchmarks.run_sdxl import main as run_sdxl
+
+    root = tmp_path / "fp16"
+    root.mkdir()
+    doc = _result_document()
+    doc["artifacts"]["image"] = "image.png"
+    (root / "image.png").write_bytes(b"placeholder image")
+    reference = root / "results.json"
+    reference.write_text(json.dumps(doc), encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        run_sdxl([
+            "--revision", "a" * 40,
+            "--mode", "bnb-int8",
+            "--reference-results", str(reference),
+            "--output-dir", str(tmp_path / "int8"),
+            "--seed", "1234",
+        ])
+    assert exc.value.code == 2
+
+
+def test_readme_benchmark_table_uses_only_completed_artifacts(tmp_path):
+    root = tmp_path / "results"
+    table = render_table(root)
+    assert "| --- | --- | --- | --- |" in table
+    assert "| End-to-end latency | Not measured | Not measured | Not simulated |" in table
+    assert "| Power | Not measured | Not measured | Not estimated |" in table
+
+    fp16_path = root / "fp16" / "results.json"
+    fp16_path.parent.mkdir(parents=True)
+    fp16_path.write_text(json.dumps(_result_document()), encoding="utf-8")
+    quant = _result_document(weight_bits=8, runtime_int8=True)
+    quant["quantization"]["backend_version"] = "1.2.3"
+    quant_path = root / "bnb-int8" / "results.json"
+    quant_path.parent.mkdir(parents=True)
+    quant_path.write_text(json.dumps(quant), encoding="utf-8")
+    table = render_table(root)
+    assert "| End-to-end latency | 1.000 s | 1.000 s | Not simulated |" in table
+    assert "runtime INT8 state verified; bitsandbytes 1.2.3" in table
+
+    readme = tmp_path / "README.md"
+    readme.write_text(f"before\n<!-- SDXL_BENCHMARK_TABLE:START -->\nold\n<!-- SDXL_BENCHMARK_TABLE:END -->\nafter\n")
+    update_readme(readme, root)
+    assert "| Images per second | 1.0000 | 1.0000 | Not simulated |" in readme.read_text()
+
+
+def test_three_dpu_architecture_inputs_are_explicit_and_distinct():
+    configs = [
+        ArchConfig.load("configs/dpu_low_cost.json"),
+        ArchConfig.load("configs/dpu_balanced.json"),
+        ArchConfig.load("configs/dpu_high_performance.json"),
+    ]
+    assert [config.name for config in configs] == [
+        "dpu-low-cost-hypothesis",
+        "dpu-balanced-hypothesis",
+        "dpu-high-performance-hypothesis",
+    ]
+    assert configs[0].int8_tops < configs[1].int8_tops < configs[2].int8_tops

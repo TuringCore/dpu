@@ -17,16 +17,18 @@ The goal is not to build a heroic chip on day one. The goal is to answer the eco
 environment audit could not load the model or establish GPU availability. No performance,
 power, image-quality, or cost result below is represented as a measurement.
 
+<!-- SDXL_BENCHMARK_TABLE:START -->
 | Metric | GPU FP16 | GPU Quantized | Turing DPU Simulated |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Model | SDXL base 1.0; revision not resolved | SDXL base 1.0; revision not resolved | Exact quantized workload unavailable |
-| Precision | FP16 | bitsandbytes INT8 UNet linear weights / FP16 remainder (runner available; not run) | Not simulated |
+| Precision | Not measured | Not measured | Not simulated |
 | End-to-end latency | Not measured | Not measured | Not simulated |
 | Images per second | Not measured | Not measured | Not simulated |
 | Memory requirement | Not measured | Not measured | Not simulated |
 | Power | Not measured | Not measured | Not estimated |
 | Cost per 1,000 images | Not calculated | Not calculated | Not calculated |
-| Measurement status | Not run: no ML runtime/GPU verified | Not run: no ML runtime/GPU verified | Not simulated from an executed graph |
+| Measurement status | Not run: environment blocker | Not run: environment blocker | Not simulated from an executed graph |
+<!-- SDXL_BENCHMARK_TABLE:END -->
 
 GPU columns are intended for synchronized measurements of actual CUDA inference. DPU figures,
 when available, will be analytical performance estimates—not measured silicon performance.
@@ -34,7 +36,14 @@ The static graph and placeholder economic examples elsewhere in this README are 
 benchmark results. Full audit and limitations: [`docs/research/benchmark_audit.md`](docs/research/benchmark_audit.md);
 environment blocker: [`benchmarks/results/execution_blocker.json`](benchmarks/results/execution_blocker.json).
 
-To reproduce on a CUDA machine, install the GPU dependencies and bitsandbytes. Pin the exact
+To reproduce on a CUDA machine, install the GPU dependencies and bitsandbytes:
+
+```bash
+python -m pip install "torch>=2.1" "diffusers>=0.27" "transformers>=4.38" \
+  "accelerate>=0.27" bitsandbytes
+```
+
+Pin the exact
 40-character model commit SHA and use that same SHA for both commands; the scheduler, dimensions,
 steps, guidance, prompt, and seed are fixed by the runner:
 
@@ -42,17 +51,22 @@ steps, guidance, prompt, and seed are fixed by the runner:
 python -m benchmarks.run_sdxl --revision <40-character-model-commit-sha> --mode fp16 \
   --output-dir benchmarks/results/fp16
 python -m benchmarks.run_sdxl --revision <same-commit-sha> --mode bnb-int8 \
-  --reference-image benchmarks/results/fp16/image.png \
+  --reference-results benchmarks/results/fp16/results.json \
   --output-dir benchmarks/results/bnb-int8
 ```
 
 Each successful run writes machine-readable `results.json`, raw synchronized latency samples,
 `operator_trace.json`, `module_graph.json`, profiler operator summaries, and the generated image.
-INT8 reports runtime quantized-state evidence and paired pixel MSE/PSNR; pixel error is not a
-semantic image-quality metric. The DPU simulator does not yet import these runtime traces, so no
+The quantized command validates that the FP16 artifact uses the same model revision, prompt,
+seed, scheduler, and generation settings. INT8 reports runtime quantized-state evidence and
+paired pixel MSE/PSNR; pixel error is not a semantic image-quality metric. The DPU simulator
+does not yet import these runtime traces, so no
 exact-workload DPU command or result is claimed. Three explicitly hypothetical architecture
 inputs are in `configs/dpu_low_cost.json`, `configs/dpu_balanced.json`, and
 `configs/dpu_high_performance.json`.
+
+After creating both GPU artifacts, refresh the table with
+`python -m benchmarks.readme_table --results-dir benchmarks/results --readme README.md`.
 
 The design here is intentionally narrow: a signed `int8` dot-product tile with saturating accumulation, valid/ready interfaces, and explicit edge handling. That is enough to capture the core diffusion workload without pretending the full accelerator is already solved.
 

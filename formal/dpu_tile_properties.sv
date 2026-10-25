@@ -4,7 +4,7 @@ module dpu_tile_properties (
 );
     localparam int DATA_W = 8;
     localparam int ACC_W  = 16;
-    localparam int LEN_W  = 4;
+    localparam int LEN_W  = 6;
 
     (* anyseq *) logic            cfg_valid;
     logic                         cfg_ready;
@@ -22,6 +22,7 @@ module dpu_tile_properties (
     logic signed [ACC_W-1:0]      model_acc_q;
     logic                         model_out_valid_q;
     logic signed [ACC_W-1:0]      model_out_sum_q;
+    logic                         max_len_job_q;
     logic                         past_valid_q;
 
     dpu_tile #(
@@ -81,13 +82,16 @@ module dpu_tile_properties (
             model_acc_q       <= '0;
             model_out_valid_q <= 1'b0;
             model_out_sum_q   <= '0;
+            max_len_job_q     <= 1'b0;
         end else begin
             if (model_out_valid_q && out_ready) begin
                 model_out_valid_q <= 1'b0;
+                max_len_job_q     <= 1'b0;
             end
 
             if (cfg_valid && cfg_ready) begin
                 model_acc_q <= '0;
+                max_len_job_q <= &cfg_len;
                 if (cfg_len == '0) begin
                     model_active_q    <= 1'b0;
                     model_remaining_q <= '0;
@@ -149,6 +153,9 @@ module dpu_tile_properties (
             if ($past(rst_n) && past_valid_q) begin
                 if (out_valid || model_out_valid_q) begin
                     assert(out_valid == model_out_valid_q);
+                    if (out_valid && model_out_valid_q) begin
+                        assert(out_sum == model_out_sum_q);
+                    end
                 end
             end
 
@@ -157,6 +164,12 @@ module dpu_tile_properties (
                 assert(out_valid);
                 assert($stable(out_sum));
             end
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst_n) begin
+            cover(max_len_job_q && out_valid && out_ready);
         end
     end
 

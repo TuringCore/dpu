@@ -42,6 +42,12 @@ To evolve this into a stronger formal signoff package, extend the property set w
 4. end-to-end array-level proofs once multiple tiles are connected
 5. assumptions on command legality and multi-job scheduling rules
 
+The current formal job also checks result data against its reference model and
+runs a cover task demonstrating completion and acceptance of a maximum-length
+job (`cfg_len=63` for the configured 6-bit length). Run both proof and cover
+tasks with `make formal`. CI runs Verilator lint on `rtl/dpu_tile.sv` using
+`--lint-only --Wall`.
+
 ## Pre-tape-out verification additions
 
 Before any serious shuttle or foundry handoff, verification should also include:

@@ -21,6 +21,7 @@ formal:
 		exit 1; \
 	fi
 	sby -f formal/dpu_tile.sby
+	sby -f formal/dpu_tile_cover.sby
 
 # Requires Docker + OpenLane (see openlane/README.md); runs the full flow.
 sky130-synth:

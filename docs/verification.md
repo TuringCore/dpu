@@ -52,3 +52,13 @@ Before any serious shuttle or foundry handoff, verification should also include:
 - gate-level or netlist-level smoke checks after synthesis
 - power intent checks if retention or clock gating is introduced
 
+
+## Performance scorecard (CI)
+
+`make perf` (CI job `perf`) prints and publishes to the job summary a standard scorecard:
+
+- **Measured** (cycle-accurate sim, `tb/dpu_tile_perf_tb.sv`): job latency (len 1/16/max, with consumer stall), sustained MAC/cycle and per-job overhead.
+- **Measured** (Yosys, PDK-agnostic): flip-flop count (on-chip state; the tile has no SRAM), generic cell count, logic depth.
+- **Modeled** (assumptions adjustable via flags of `scripts/perf_report.py`): Fmax, area, dynamic power, TOPS/W, GMAC/s/mm², and a diffusion workload projection (time/energy per image, array area, optional silicon cost).
+
+Model figures are proxies for trend tracking, not signoff numbers; use OpenLane results for those.

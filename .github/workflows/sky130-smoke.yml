@@ -48,3 +48,20 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y yosys
       - name: Yosys synthesis (no Docker, PDK-agnostic)
         run: make sky130-synth-yosys-only
+
+  perf:
+    name: perf (latency / throughput / area / workload scorecard)
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - name: Performance scorecard
+        run: make perf
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-output
+          path: build/perf/
+          if-no-files-found: ignore

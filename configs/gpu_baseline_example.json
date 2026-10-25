@@ -1,0 +1,1 @@
+{"name": "EXAMPLE-GPU (placeholder)", "label": "assumed", "images_per_s": 0.5, "power_w": 400, "purchase_usd": 1800, "host_share_usd": 300, "source": "PLACEHOLDER: replace with a measured run of benchmarks.profile --measure on your GPU and a current quote"}

@@ -1,31 +1,37 @@
-# DPU prototype: build the first silicon cleanly on SKY130
+# DPU: a diffusion-inference accelerator research platform
 
 ## The objective
 
 This repository is a small, verification-friendly diffusion processing unit (DPU) prototype aimed at one thing: reducing the cost and uncertainty of running diffusion inference on real silicon.
 
-The goal is not to build a heroic chip on day one. The goal is to make the first silicon useful enough to answer the right questions quickly:
+The goal is not to build a heroic chip on day one. The goal is to answer the economic and architectural questions *before* committing to silicon, and to validate the answer on an FPGA first:
 
+- Which SDXL operators dominate, and are they compute- or memory-bound?
+- How much quantization, SRAM and external bandwidth does a competitive design need?
+- Can a fixed-function accelerator reach at least a 2x lower cost per equivalent-quality image than an optimized GPU?
 - Is the datapath correct under signed arithmetic and backpressure?
-- Does the tile behave predictably at the interface boundary?
-- Can this design be made with a clean, realistic SKY130 flow?
-- What does the supply chain look like once the chip is no longer a prototype?
 
 The design here is intentionally narrow: a signed `int8` dot-product tile with saturating accumulation, valid/ready interfaces, and explicit edge handling. That is enough to capture the core diffusion workload without pretending the full accelerator is already solved.
 
 ## What is in this repo
 
+Hardware (unchanged):
+
 - `rtl/dpu_tile.sv` — core DPU tile RTL
-- `tb/dpu_tile_tb.sv` — simulation testbench with randomized coverage
-- `formal/dpu_tile_properties.sv` — formal properties and reference model
-- `formal/dpu_tile.sby` — SymbiYosys proof job
-- `docs/architecture.md` — architecture intent and scaling path
-- `docs/verification.md` — verification strategy
-- `docs/roadmap.md` — longer-term scaling notes
-- `docs/SYNTHESIS.md` — sky130 synthesis flow
-- `openlane/README.md` — full P&R with upstream OpenLane
-- `docs/architecture/current_state.md`, `docs/research/diffusion_accelerator.md` — audit and diffusion-accelerator research (Python tooling: `compiler/`, `benchmarks/`, `simulator/`; run `python -m pytest`)
-- `Makefile` — simulation, formal, and synthesis entry points
+- `tb/` — simulation and cycle-count testbenches
+- `formal/` — formal properties, reference model, SymbiYosys jobs
+- `Makefile` — `make sim`, `make formal`, `make perf`
+- `docs/architecture.md`, `docs/verification.md`, `docs/roadmap.md` — architecture, verification, scaling notes
+- `openlane/`, `docs/SYNTHESIS.md` — earlier SKY130 block-hardening setup, retained for reference only and no longer the project path
+
+Research platform (Python 3.11+, milestone 1):
+
+- `compiler/` — versioned workload schema (`dpu-workload/1`), static SDXL UNet graph, optional CUDA profiler (`torch_profiler.py`)
+- `benchmarks/profile.py` — profiling CLI; `benchmarks/evaluate.py` — workload + architecture + economics + GPU baseline -> report
+- `simulator/` — `config.py` (architecture parameters), `roofline.py` (analytical roofline model), `economics.py` (cost model)
+- `configs/` — example architecture, economics and GPU-baseline files (**placeholders, not real quotes or measurements**)
+- `tests/` — CPU-only pytest suite; CI in `.github/workflows/python-research.yml`
+- `docs/architecture/current_state.md` — repository audit; `docs/research/diffusion_accelerator.md` — findings, evidence vs hypotheses
 
 ## Why this is the right first silicon
 
@@ -38,185 +44,60 @@ Diffusion workloads spend most of their compute in repeated multiply-accumulate 
 - zero-length handling
 - stable output under backpressure
 
-That is exactly the kind of primitive that can be made small enough to prove, stable enough to tape out, and useful enough to scale later.
+That is exactly the kind of primitive that can be made small enough to prove, stable enough to prototype on an FPGA, and useful enough to scale later.
 
 ## Economic rationale
 
-Custom silicon is not automatically cheaper than a GPU: its case depends on a stable, high-volume workload, measured end-to-end efficiency, and amortizing development and manufacturing costs across enough deployments. GPU purchase and cloud prices can move with supply and demand, but GPUs also bring mature software, high throughput, and integrated memory bandwidth. Compare complete systems—including memory, host, power, utilization, and support—not just chip or hourly prices.
+Custom silicon is not automatically cheaper than a GPU: the case depends on a stable, high-volume workload, measured end-to-end efficiency, and amortizing development and manufacturing costs. Compare complete systems (memory, host, power, utilization, support), not chip or hourly prices. Hardware purchase cost is kept separate from cloud rental prices.
 
-The DPU’s plausible opportunity is a narrow, quantized inference workload where predictable power, deployment cost, privacy, or supply control outweighs the flexibility of a GPU. This tile is only a verifiable building block, not a GPU substitute; a credible cost-per-inference advantage requires scaling compute, adding local memory and data reuse, and validating the complete design against real workloads before committing to pilot or volume production.
+The central question: **can a diffusion-specialized ASIC, using ahead-of-time quantization and an optimized memory hierarchy, achieve at least 2x lower cost per equivalent-quality image than an optimized GPU?** Everything below exists to answer that rigorously.
 
-## Production path
+## The experiment that justifies (or kills) the ASIC
 
-The cleanest way to get this design to silicon is a single, disciplined sequence with decision points built in.
+1. **Measure the GPU baseline** (real, not assumed). With CUDA and `pip install .[gpu]`:
+   `python -m benchmarks.profile --model sdxl --resolution 1024 --steps 20 --measure --output results/sdxl.json`
+   Records per-module GPU time, peak memory and end-to-end latency, tagged `measured`. Repeat on the best optimized configuration available (fused attention, `torch.compile`, TensorRT, FP8/INT8) on e.g. RTX 4090/5090 and a datacenter GPU. Without CUDA the tool emits a static estimate only and says timings were not measured.
+2. **Characterise the workload.** The versioned JSON holds per-operator MACs (1 MAC = 2 FLOPs), weight/activation sizes and arithmetic intensity, with measured and static data kept distinct.
+3. **Simulate candidate DPUs** with the analytical roofline model (`simulator/roofline.py`): INT8/INT4 throughput, SRAM, DRAM bandwidth/capacity, DMA cost, softmax/vector cost. Weights are never assumed to fit in SRAM. Results are labelled SIMULATED.
+4. **Price it** with `simulator/economics.py`: die area, wafer price, yield, packaging, memory, board, host, cooling/PUE, NRE, volume, utilization, electricity, lifetime. All inputs are user-supplied scenarios; no foundry prices are built in. Outputs: cost per 1,000 images, energy per image, images/s per hardware dollar, break-even volume, utilization/yield sensitivity, and the throughput needed for a 2x/3x/5x advantage.
+5. **Decide.** Replace `configs/gpu_baseline_example.json` and `configs/economics_scenario_a.json` with measured and quoted values:
+   ```bash
+   python -m benchmarks.evaluate --workload results/sdxl.json --arch configs/dpu_32tops.json \
+       --economics configs/economics_scenario_a.json --gpu configs/gpu_baseline_example.json
+   ```
+   If no plausible parameter set reaches 2x at equal image quality, stop before building silicon.
 
-1. Freeze behavior before layout
-   - lock arithmetic, saturation, backpressure, zero-length handling, and valid/ready semantics
-   - if these are still ambiguous, the silicon plan is already too early
+Current status: with placeholder inputs the example 32-TOPS DPU is *worse* than the placeholder GPU (0.38x). That demonstrates the tooling only; it is not evidence either way. Static SDXL estimate: ~6.76 TMACs per denoising step (CFG on, 1024x1024, unfused attention), ~97% compute-bound at 200 GB/s in the model. See `docs/research/diffusion_accelerator.md`.
 
-2. Make the simulation testbench the source of truth
-   - cover normal dot products, overflow, zero-length jobs, backpressure, random signed inputs, and held output behavior
-   - the behavioral model should be boring and explicit before any physical implementation starts
+Still to build: discrete-event simulator, quantization quality experiments (INT8, W4, W4A8), architecture frontier search, parameter sweeps.
 
-3. Close the formal contract
-   - prove the core protocol invariants and arithmetic assumptions
-   - ensure the reference model and implementation agree under the edge cases that matter
-   - this is the point where the design moves from illustrative to engineering-grade
+## Path to hardware: FPGA prototype first
 
-4. Run the checked-in SKY130 block hardening setup
-   - run simulation, formal, mapped synthesis, then OpenLane using `openlane/config.json`
-   - inspect timing, area, DRC/LVS, antenna, and routing reports; the target constraints are estimates, not foundry signoff
-   - record the exact PDK and flow versions and review all waivers before selecting a submission route
+FPGA is the prototype vehicle, replacing the earlier SKY130 shuttle plan. It validates RTL and the dataflow without a tape-out, and gives real, measured numbers to calibrate the simulator. It does **not** demonstrate production-ASIC PPA; FPGA clocks, area and power must not be extrapolated naively to an ASIC.
 
-5. Lock the manufacturing posture before the design becomes “final”
-   - standard package, simple power rails, straightforward clocking, commodity bring-up board
-   - a complicated package or custom board is a tax on the project, not a sign of seriousness
+Planned stages (none implemented yet beyond stage 0):
 
-6. Choose the production path based on evidence, not optimism
-   - if the goal is learning: use a prototype MPW/turnkey route and a standard package
-   - if there is real demand: repeat a proven die in modest volume with a defined package/test partner
-   - if demand scales: move to more direct foundry management and second-sourced packaging/test
+0. **Existing tile**: signed int8 dot product with saturating accumulation, proven in simulation and formally. Synthesizes to any FPGA toolchain unchanged.
+1. **Reusable components**, each with a self-checking testbench (formal where practical): parameterized MAC-array wrapper built from the tile semantics, explicit accumulator-width handling, configurable requantization/rescaling, a simple SRAM scratchpad interface (BRAM/URAM), and a basic DMA command interface.
+2. **Single matrix engine on a mid-range FPGA card** (an accelerator card with HBM or DDR is preferable so bandwidth is realistic). Run INT8 GEMM and convolution layers extracted from the SDXL workload JSON.
+3. **Calibrate the simulator**: compare measured cycles, utilization and DRAM traffic per layer against the roofline model; fix the model where they disagree.
+4. **Scale-out study**: use the calibrated model to choose array size, SRAM and bandwidth for an ASIC, then decide on silicon using the economics above.
 
-This is the real roadmap: behavior first, proof next, physical estimate third, then manufacturing based on real learning and demand.
-
-## Physical Design Flow
-
-Two tiers:
-
-- **Lightweight:** Yosys synthesis in CI (`make sky130-synth-yosys-only`) for fast validation, no Docker.
-- **Block hardening:** OpenLane P&R locally with upstream [OpenLane](https://github.com/The-OpenROAD-Project/OpenLane), using the checked-in design config, SDC, and pin-order file (see `openlane/README.md` and `docs/SYNTHESIS.md`). This is not full tapeout signoff.
-
-## SKY130 submission: next steps
-
-This repository currently implements one parameterized dot-product tile, not a
-complete Stable Diffusion accelerator or a pad-limited chip. Before submitting
-to a shuttle or foundry, the project still needs to:
-
-1. Freeze the RTL/interface and supported parameter values; complete functional,
-   formal, lint, and gate-level verification, and resolve or document warnings.
-2. Run the configured OpenLane hardening flow and review timing/STA, DRC, LVS,
-   antenna, density, and routing results against the selected submission
-   program's rules; repeat after any changes and archive the reports.
-3. Define the actual chip-level integration: required accelerator/system
-   wrapper, IO/pad ring and ESD strategy, package, power distribution, clock and
-   reset implementation, and board-level interface. This block configuration
-   does not provide these.
-4. Complete program-required DFT/scan, power integrity (IR drop/EM), reliability,
-   and signoff checks; these are not currently implemented or demonstrated here.
-5. Select a SKY130 shuttle/foundry route and follow its current submission
-   checklist for PDK/flow versions, permitted cells/macros, GDS/OASIS and
-   LEF/abstract views, netlists, timing/physical reports, waivers, licensing,
-   and submission metadata.
-6. Prepare the bring-up plan and deliverables (test vectors, firmware or host
-   tooling, board, and validation plan) with the submission partner.
-
-## Supply chain tradeoffs
-
-The manufacturing decision is not about picking a single best path; it is about choosing the right tradeoff at the right maturity stage.
-
-- Low-volume / high-learning path: standard package, minimal custom test hardware, prototype run, conservative IO. Best when the priority is learning and de-risking.
-- Pilot deployment path: modest lot size, repeatable die, defined board assembly and OSAT, focus on repeatability rather than novelty. Best when the workload is real and the project needs operating data.
-- Scale-up path: direct foundry management, second-source packaging/test, inventory planning, modular board design. Best when the silicon is clearly proving value and volume is becoming predictable.
-
-The main bottleneck is usually not the wafer alone. It is the combination of package, test flow, board integration, and the ability to repeat the design without re-architecting it.
-
-## Where manufacturing should happen
-
-A practical steady-state split is:
-
-- wafer fabrication: foundry or prototype partner with dependable SKY130 access and process support
-- packaging and test: external OSAT with strong engineering support and repeatable throughput
-- board assembly: close to the integration team or deployment region for faster iteration and easier field support
-
-The objective is flexibility: keep the chip reusable, the package standard, and the system design modular enough that capacity can scale by replication rather than redesign.
+Success criteria for the FPGA stage: bit-exact match with the reference model on real layer data, and simulator-vs-hardware per-layer cycle error documented. The architecture should be chosen by the simulator; do not build large RTL before it points at a configuration.
 
 ## Quick start
 
-Local simulation:
-
 ```bash
-make sim
+pip install "pytest>=8"
+python -m pytest -q                     # CPU-only tests
+python -m benchmarks.profile --resolution 1024 --steps 20 --output results/sdxl.json
+make sim                                # RTL simulation (needs iverilog)
+make formal                             # formal proofs (needs yosys + sby)
 ```
 
-Formal verification:
+Generated results under `results/` and model artifacts are not committed.
 
-```bash
-make formal
-```
+## References
 
-If `sby` is not installed, the formal target will stop with a clear message rather than failing silently.
-
-## SKY130-specific guidance
-
-For this program, the right assumptions are intentionally conservative:
-
-- process: SKY130
-- flow: OpenLane/OpenROAD
-- first package: simple, standard, easy to source
-- voltage: standard rails, no exotic power domains
-- board: commodity regulators and debug headers
-- objective: first useful silicon, then scale
-
-A chip designed for the first available package, board, and test flow is easier to manufacture and easier to learn from.
-
-## Real manufacturing choices
-
-There are three realistic routes for a SKY130 prototype.
-
-### Option A: MPW or turnkey ASIC services
-
-Best for:
-
-- first silicon with minimal internal process overhead
-- teams that want wafers, package, and test handled by a service provider
-- fast learning without building a deep manufacturing org
-
-Good partners to evaluate include:
-
-- MOSIS
-- Europractice
-- CMC Microsystems
-- commercial ASIC service houses with SKY130 experience
-
-Use this when the goal is speed and clean execution.
-
-### Option B: direct foundry + external OSAT
-
-Best for:
-
-- more control over wafers, packaging, and test
-- cleaner repeatable production path
-- stronger process management once the design is stable
-
-This is usually a better fit once there is real product pull.
-
-### Option C: educational or tiny prototype runs
-
-Best for:
-
-- macro experiments
-- educational demonstrations
-- non-production validation
-
-This is not the route for a serious first accelerator prototype unless the program is intentionally small.
-
-## Recommended production posture
-
-For this repository, the practical choice is:
-
-1. use OpenLane + SKY130 for internal iteration
-2. keep the first die small and boring
-3. package it in a standard part
-4. use a commercial prototype route or institutional brokerage for the first tape-out
-5. bring it up on a simple commodity board
-
-That preserves open tooling while reducing the points of failure that kill small silicon programs: package issues, supply friction, and weak bring-up planning.
-
-## References and useful links
-
-- [OpenLane](https://openlane.readthedocs.io/en/latest/)
-- [SKY130 PDK](https://github.com/google/skywater-pdk)
-- [OpenROAD Project](https://theopenroadproject.org/)
 - [SymbiYosys](https://symbiyosys.readthedocs.io/)
-
-The key idea is straightforward: build the smallest credible tile, prove it, make it manufacturable, and do not confuse early learning with final product strategy.
+- [Hugging Face Diffusers](https://huggingface.co/docs/diffusers)

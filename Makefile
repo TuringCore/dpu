@@ -24,8 +24,12 @@ formal:
 
 # Requires Docker + OpenLane (see openlane/README.md); runs the full flow.
 sky130-synth:
-	@if ! command -v docker >/dev/null 2>&1 && [ -z "$$OPENLANE_ROOT" ]; then \
-		echo "Requires Docker and an upstream OpenLane checkout (OPENLANE_ROOT). See openlane/README.md."; \
+	@if [ -z "$$OPENLANE_ROOT" ]; then \
+		echo "Set OPENLANE_ROOT to an upstream OpenLane checkout. See openlane/README.md."; \
+		exit 1; \
+	fi
+	@if [ ! -f "$$OPENLANE_ROOT/flow.tcl" ]; then \
+		echo "No flow.tcl found under OPENLANE_ROOT=$$OPENLANE_ROOT."; \
 		exit 1; \
 	fi
 	cd $${OPENLANE_ROOT:-.} && make mount MOUNT_CMD='./flow.tcl -design $(CURDIR)/openlane'
@@ -61,4 +65,3 @@ perf: perf-sim perf-synth
 clean:
 	rm -f $(SIM_OUT) *.vcd
 	rm -rf formal/output build
-

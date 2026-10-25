@@ -1,0 +1,1 @@
+{"name": "dpu-64tops-hypothetical", "int8_tops": 64, "sram_mb": 32, "dram_bw_gbs": 400, "dram_gb": 16, "power_w": 120, "weight_bits": 8, "act_bits": 8}

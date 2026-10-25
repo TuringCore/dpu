@@ -24,6 +24,7 @@ The design here is intentionally narrow: a signed `int8` dot-product tile with s
 - `docs/roadmap.md` — longer-term scaling notes
 - `docs/SYNTHESIS.md` — sky130 synthesis flow
 - `openlane/README.md` — full P&R with upstream OpenLane
+- `docs/architecture/current_state.md`, `docs/research/diffusion_accelerator.md` — audit and diffusion-accelerator research (Python tooling: `compiler/`, `benchmarks/`, `simulator/`; run `python -m pytest`)
 - `Makefile` — simulation, formal, and synthesis entry points
 
 ## Why this is the right first silicon

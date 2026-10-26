@@ -1,0 +1,14 @@
+# GitHub linguist: keep the hardware repo classified as SystemVerilog-heavy.
+*.sv linguist-detectable=true
+*.sv linguist-language=SystemVerilog
+*.svh linguist-detectable=true
+*.svh linguist-language=SystemVerilog
+*.v linguist-detectable=true
+*.v linguist-language=Verilog
+
+# Keep generated and vendor artifacts out of source-language stats.
+*.json linguist-generated=true
+*.bin linguist-generated=true
+*.dat linguist-generated=true
+*.tar.gz linguist-generated=true
+

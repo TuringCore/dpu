@@ -1,6 +1,6 @@
 SIM_OUT := simv
 
-.PHONY: sim clean formal sky130-synth sky130-synth-local sky130-synth-yosys-only perf perf-sim perf-synth
+.PHONY: sim clean formal sky130-synth sky130-synth-local sky130-synth-yosys-only perf perf-sim perf-synth f2-help f2-prepare f2-register f2-launch
 
 # Frozen tile configuration
 DATA_W ?= 8
@@ -62,6 +62,34 @@ perf-synth:
 
 perf: perf-sim perf-synth
 	python3 scripts/perf_report.py --sim $(PERF_DIR)/sim.log --synth $(PERF_DIR)/synth.log --data-w $(DATA_W) --acc-w $(ACC_W) --len-w $(LEN_W)
+
+# AWS EC2 F2 / FPGA deployment helpers.
+# The repo's RTL is synthesizable and verifiable without vendor tooling, but the F2 flow
+# needs an already-generated bitstream and the AWS CLI (or an equivalent deployment toolchain).
+F2_SCRIPT := scripts/f2_deploy.py
+
+BITSTREAM ?= build/f2/dpu_bitstream.bin
+S3_BUCKET ?= my-dpu-fpga-bucket
+S3_PREFIX ?= dpu/f2
+AFI_NAME ?= dpu-f2-image
+AFI_DESCRIPTION ?= DPU FPGA image for diffusion inference experiments
+AWS_REGION ?= us-east-1
+INSTANCE_TYPE ?= f2
+AMI_ID ?=
+KEY_NAME ?=
+SECURITY_GROUP ?=
+
+f2-help:
+	python3 $(F2_SCRIPT) --help
+
+f2-prepare:
+	python3 $(F2_SCRIPT) prepare --bitstream $(BITSTREAM) --output-dir build/f2 --bucket $(S3_BUCKET) --prefix $(S3_PREFIX)
+
+f2-register:
+	python3 $(F2_SCRIPT) register --bitstream $(BITSTREAM) --name "$(AFI_NAME)" --description "$(AFI_DESCRIPTION)" --bucket $(S3_BUCKET) --prefix $(S3_PREFIX) --region $(AWS_REGION)
+
+f2-launch:
+	python3 $(F2_SCRIPT) launch --instance-type $(INSTANCE_TYPE) --ami $(AMI_ID) --key-name $(KEY_NAME) --security-group $(SECURITY_GROUP)
 
 clean:
 	rm -f $(SIM_OUT) *.vcd
